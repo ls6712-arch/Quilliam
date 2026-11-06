@@ -59,7 +59,8 @@ h1{font-family:var(--f-brand);font-style:italic;font-weight:800;font-size:clamp(
 .status{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 
 /* ---------- The letter ---------- */
-.stage{display:grid;place-items:center}
+.stage{display:block;width:100%;min-width:0}
+.stage>.letter{margin-inline:auto;box-sizing:border-box}
 .letter{container-type:inline-size;position:relative;width:100%;max-width:100%;border-radius:6px;overflow:hidden;box-shadow:0 30px 60px #0009;color:var(--ink);font-family:var(--lf);background:var(--lbg);display:grid;gap:4cqw}
 .letter::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--ldeco,none)}
 .letter>*{position:relative}
