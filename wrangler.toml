@@ -1,0 +1,13 @@
+# Lets Cloudflare's Git deploy find the Worker from the repo root.
+name = "quilliam"
+main = "worker/worker.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quilliam"
+database_id = "f3dec12a-6070-4fc0-b90d-b14a5e054274"
+
+[[kv_namespaces]]
+binding = "LETTERS"
+id = "a54fe60e97e84e45ad8877f1090cbf67"
