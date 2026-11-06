@@ -80,6 +80,13 @@ h1{font-family:var(--f-brand);font-style:italic;font-weight:800;font-size:clamp(
 .hint{position:absolute;inset:auto 0 40%;text-align:center;font-style:italic;opacity:.45;pointer-events:none;font-size:max(13px,2.2cqw)}
 .l-sign{justify-self:end;text-align:right;font-style:italic;font-size:max(12px,2.1cqw);padding-left:14cqw}
 .l-sign .name{font-family:"Caveat",cursive;font-size:1.55em;display:block;line-height:1}
+.nm{outline:none;border-bottom:1.5px dashed color-mix(in srgb,var(--ink) 45%,transparent);cursor:text;min-width:3ch;display:inline-block;padding:0 .1em;border-radius:3px}
+.nm:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.nm:focus{background:color-mix(in srgb,var(--ink) 12%,transparent);border-bottom-style:solid}
+.nm:empty::before{content:attr(data-ph);opacity:.45;font-style:italic}
+.nm.up{text-transform:uppercase}
+.capturing .nm{border-bottom-color:transparent;background:none}
+.capturing .nm:empty::before{content:none}
 
 .l-photo{grid-area:photo;position:relative;border-radius:4px;overflow:hidden;min-height:0;display:none}
 .letter[data-layout="photo"] .l-photo,.letter[data-layout="travel"] .l-photo{display:block}
@@ -359,8 +366,8 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
       </div>
       <div class="panel">
         <h2>Addressed to</h2>
-        <label for="to">Their name<input type="text" id="to" value="Maya" maxlength="40"></label>
-        <label for="from">Signed by<input type="text" id="from" value="Raj" maxlength="40"></label>
+        <label for="to">Their name<input type="text" id="to" value="" placeholder="Who is it for?" maxlength="40"></label>
+        <label for="from">Signed by<input type="text" id="from" value="" placeholder="Your name" maxlength="40"></label>
         <label for="place" id="placewrap">Greetings from<input type="text" id="place" value="Lisbon" maxlength="28"></label>
         <label for="addr" id="addrwrap">Their city (shown on the postcard)<input type="text" id="addr" value="Brooklyn, NY" maxlength="40"></label>
         <button class="send" id="sealbtn">Seal &amp; send</button>
@@ -805,9 +812,27 @@ function applyPaper(){
   L.style.setProperty("--lf",p.font); L.style.setProperty("--gf",p.gfont); L.style.setProperty("--rule",p.rule||"none");
   applyCorp(); renderText(); redraw();
 }
-function renderText(){
+/* Names are typed straight onto the letter; the side-panel boxes mirror them. */
+function nameSpan(id,ph,val,up){ const n=document.createElement("span"); n.className="nm"+(up?" up":""); n.id=id;
+  try{ n.contentEditable="plaintext-only"; }catch(e){} if(n.contentEditable!=="plaintext-only") n.contentEditable="true";
+  n.spellcheck=false; n.setAttribute("role","textbox"); n.setAttribute("aria-label",ph); n.dataset.ph=ph; n.textContent=val; return n; }
+function bindName(n,inputId){
+  n.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); n.blur(); } });
+  n.addEventListener("input",()=>{ let v=n.textContent.replace(/\s+/g," "); if(v.length>40){ v=v.slice(0,40); n.textContent=v; } $(inputId).value=v.trim(); renderText(true); if(inputId==="from") remember(); });
+  n.addEventListener("blur",()=>{ if(!n.textContent.trim()) n.textContent=""; });
+  n.addEventListener("paste",e=>{ e.preventDefault(); const t=((e.clipboardData&&e.clipboardData.getData("text"))||"").replace(/\s+/g," ").slice(0,40); document.execCommand("insertText",false,t); });
+}
+function remember(){ store.set("q.from",$("from").value.trim()); }
+function renderNames(){
+  const p=paper(), to=$("to").value.trim(), g=$("l-greet"); g.textContent="";
+  const m=p.greet.match(/^(.*?)\{(to|TO)\}(.*)$/);
+  if(m){ g.append(m[1]); const n=nameSpan("nm-to","their name",to,m[2]==="TO"); bindName(n,"to"); g.append(n,m[3]); } else g.textContent=p.greet;
+  const f=$("l-from"); f.textContent=""; const fn=nameSpan("nm-from","your name",$("from").value.trim(),false); bindName(fn,"from"); f.append(fn);
+}
+function renderText(fromLetter){
   const p=paper(), to=$("to").value.trim(), place=$("place").value.trim()||"somewhere lovely";
-  $("l-greet").textContent=fmtGreet(p,to); $("l-close").textContent=p.close; $("l-from").textContent=$("from").value.trim()||"you";
+  if(fromLetter!==true) renderNames();
+  $("l-close").textContent=p.close;
   const d=new Date(); $("l-date").textContent=d.toLocaleDateString("en-US",{day:"numeric",month:"long",year:"numeric"});
   $("l-place").textContent=place; $("a-to").textContent=to||"Their name"; $("a-line").textContent=$("addr").value.trim();
   $("postmark").innerHTML = S.layout==="travel" ? `${place.slice(0,16)}<br>${d.toLocaleDateString("en-US",{month:"short",day:"numeric"})}` : `Human post<br>${d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
@@ -841,7 +866,8 @@ function renderBurn(){
   const names=["Toasty","Warm","Spicy","Scorching","Inferno"], box=$("burn"); box.innerHTML="";
   names.forEach((n,i)=>{ const b=document.createElement("button"); b.innerHTML=`<span>${i+1}</span>${n}`; b.setAttribute("aria-pressed",String(S.burn===i+1)); b.onclick=()=>{ S.burn=i+1; renderBurn(); renderText(); if(S.burn===5) quip("roastcard",true); }; box.appendChild(b); });
 }
-["to","from","place","addr","cname","ctag","cfoot"].forEach(id=>$(id).addEventListener("input",renderText));
+["to","from","place","addr","cname","ctag","cfoot"].forEach(id=>$(id).addEventListener("input",()=>{ renderText(); if(id==="from") remember(); }));
+$("from").value=store.get("q.from","")||"";
 $("cbrand").addEventListener("input",applyCorp); $("cfont").addEventListener("change",applyCorp); $("logoseal").addEventListener("change",renderSeal);
 $("logobtn").onclick=()=>$("logofile").click(); $("corplogobtn").onclick=()=>$("logofile").click(); $("corplogo").onclick=()=>$("logofile").click();
 $("logofile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
@@ -1067,7 +1093,7 @@ document.querySelectorAll("[data-plan]").forEach(b=>b.onclick=async()=>{ const k
 
 /* ================= Render the finished letter ================= */
 async function renderLetterImage(){
-  const L=$("letter"); const prevSel=S.sel; select(null);
+  const L=$("letter"); const prevSel=S.sel; select(null); L.classList.add("capturing"); if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
   let tr=null; if(S.mode==="type"){ tr=document.createElement("div"); tr.className="typed-render"; tr.textContent=ta.value; ta.hidden=true; $("l-body").appendChild(tr); }
   const hintWas=$("hint").hidden; $("hint").hidden=true; const slotWas=$("slotbtn").hidden; $("slotbtn").hidden=true; const lpWas=$("corplogobtn").hidden; $("corplogobtn").hidden=true;
   try{
@@ -1075,12 +1101,13 @@ async function renderLetterImage(){
     throw new Error("no lib");
   }catch(e){
     const c=document.createElement("canvas"); c.width=pad.width; c.height=pad.height; const x=c.getContext("2d"); x.fillStyle="#f6eedd"; x.fillRect(0,0,c.width,c.height); x.drawImage(pad,0,0); return c;
-  }finally{ if(tr){ tr.remove(); ta.hidden=S.mode!=="type"; } $("hint").hidden=hintWas; $("slotbtn").hidden=slotWas; $("corplogobtn").hidden=lpWas; }
+  }finally{ if(tr){ tr.remove(); ta.hidden=S.mode!=="type"; } $("hint").hidden=hintWas; $("slotbtn").hidden=slotWas; $("corplogobtn").hidden=lpWas; L.classList.remove("capturing"); }
 }
 let lastImage=null;
 $("sealbtn").onclick=async()=>{
   const hasInk=S.mode==="hand"?S.strokes.length>0:ta.value.trim().length>0;
   if(!hasInk){ quip("gentle",true); toast("Write a few words first"); return; }
+  if(!$("to").value.trim() && S.layout!=="roast"){ toast("Add their name at the top of the letter"); const n=$("nm-to"); if(n){ n.focus(); } return; }
   if(S.plan!=="season"&&S.credits<=0){ openPlans(); return; }
   const btn=$("sealbtn"); btn.disabled=true; btn.textContent="Melting the wax…";
   const ok=certified(); const st=$("l-stamp"); st.src=svgURI(stampSVG(paper().ink)); st.hidden=!ok;
