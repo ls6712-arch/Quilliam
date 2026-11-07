@@ -21,12 +21,18 @@ def enc(html):
 app = (root.parent / "app.html").read_text()
 landing = (root.parent / "landing.html").read_text()
 tpl = (root / "src" / "worker.template.js").read_text()
-sealgen = (root.parent / "sealgen.js").read_text()
-block = sealgen[sealgen.index("/*SEALGEN-START*/"):sealgen.index("/*SEALGEN-END*/") + len("/*SEALGEN-END*/")]
-assert block in app, "app.html is missing the current sealgen.js block; run: python3 worker/sync_sealgen.py"
+def shared(src, name):
+    t = (root.parent / src).read_text()
+    a, b = f"/*{name}-START*/", f"/*{name}-END*/"
+    blk = t[t.index(a):t.index(b) + len(b)]
+    assert blk in app, f"app.html is missing the current {src}; run: python3 worker/sync_shared.py"
+    return blk
+block = shared("sealgen.js", "SEALGEN")
+inkcheck = shared("inkcheck.js", "INKCHECK")
 
 out = (tpl
        .replace("__SEALGEN__", block)
+       .replace("__INKCHECK__", inkcheck)
        .replace("__APP_HTML__", enc(wrap(app, "Write a letter on Quilliam",
                                          "Write by hand, seal it in wax, send it with a link.")))
        .replace("__LANDING_HTML__", enc(wrap(landing, "Quilliam: handwritten letters, certified human",

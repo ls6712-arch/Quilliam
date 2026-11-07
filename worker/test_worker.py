@@ -14,10 +14,27 @@ ok=lambda c,m: print(("PASS " if c else "FAIL ")+m)
 s,a=post("/api/me",{}); tok=a["token"]; ok(s==200 and a["credits"]==1,"new buyer gets 1 free letter")
 s,a2=post("/api/me",{"token":tok}); ok(a2["token"]==tok,"returning buyer keeps their account")
 png=base64.b64encode(bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000""1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082")).decode()
-s,r=post("/api/seal",{"token":tok,"image":"data:image/png;base64,"+png,"meta":{"to":"Maya","from":"Raj <b>","certified":True,"layout":"classic","paper":"Evergreen"}})
+import math, random
+def human_ink(seed=5):
+    # Loopy strokes with speed that rises and falls, frame-like timing and uneven pauses (what a real hand produces).
+    R=random.Random(seed); S=[]; t=0; x=40; y=60; W,H=600,480
+    for w in range(7):
+        for l in range(3+R.randrange(3)):
+            n=12+R.randrange(10); r=7+R.random()*5; pts=[]
+            for i in range(n):
+                u=i/(n-1); ph=u*math.pi*2*(1+R.random()*.2)
+                pts+= [round((x+u*14+math.sin(ph)*r*.7+R.random()*.6)/W*10000), round((y-math.cos(ph)*r+R.random()*.6)/H*10000), 50, round(t)]
+                t+=16.7*(.6+.9*math.sin(u*math.pi)+R.random()*.4)
+            S.append(["fountain","#222222",pts]); x+=16; t+=120+R.random()*500
+        x+=18; t+=300+R.random()*900
+        if x>W-60: x=40; y+=40
+    return {"v":1,"w":W,"h":H,"u":1,"r":[.1,.2,.8,.7],"s":S}
+s,r=post("/api/seal",{"token":tok,"image":"data:image/png;base64,"+png,"meta":{"to":"Maya","from":"Raj <b>","certified":True,"layout":"classic","paper":"Evergreen","mode":"hand","ink":human_ink()}})
+ok(s==200 and r["check"]["certified"] is True,"server verifies real-looking handwriting itself")
 ok(s==200 and r["account"]["credits"]==0,"sealing spends the free letter"); lid=r["id"]; print("     share url:",r["url"])
+s,ct,body=get("/ink/"+lid); ok(s==200 and json.loads(body)["s"],"handwriting replay data serves")
 s,r2=post("/api/seal",{"token":tok,"image":"data:image/png;base64,"+png,"meta":{}}); ok(s==402 and r2["error"]=="no_credits","out of letters returns 402")
-s,ct,body=get("/l/"+lid); ok(s==200 and b"Raj &lt;b&gt; sent you a letter" in body and b"certified" in body,"share page renders, escapes names, shows certified")
+s,ct,body=get("/l/"+lid); ok(s==200 and b"Raj &lt;b&gt; sent you a letter" in body and b"Written by a real hand" in body and b"replayBtn" in body,"share page renders, escapes names, shows verified badge and replay")
 s,ct,body=get("/img/"+lid); ok(s==200 and ct=="image/png" and body[:4]==b"\x89PNG","letter image serves")
 s,ct,body=get("/l/notarealid12345"); ok(s==404,"unknown letter is 404")
 s,r=post("/api/checkout",{"token":tok,"plan":"pack"}); ok(s==503 and r["error"]=="stripe_not_configured","checkout says not configured without Stripe key")
