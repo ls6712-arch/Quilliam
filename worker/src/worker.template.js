@@ -11,6 +11,7 @@
 //   RESEND_API_KEY         optional, turns on email sign-in links (needs MAIL_FROM too)
 // Variables (plain text):
 //   MAIL_FROM              e.g. "Quilliam <hello@yourdomain.com>" on a domain verified in Resend
+//   GOOGLE_CLIENT_ID       turns on "Continue with Google" (with GOOGLE_CLIENT_SECRET as a secret)
 
 const PLANS = {
   pack:   { name: "Quilliam Holiday Pack (10 letters)", amount: 499, credits: 10 },
@@ -40,8 +41,10 @@ async function route(req, env) {
   if (req.method === "GET" && p.startsWith("/l/")) return letterPage(p.slice(3), url, env);
   if (req.method === "GET" && p.startsWith("/img/")) return letterImage(p.slice(5), url, env);
   if (req.method === "GET" && LEGAL[p.replace(/\/$/, "")]) return legalPage(p.replace(/\/$/, ""), url);
+  if (req.method === "GET" && p === "/auth/google") return googleStart(req, url, env);
+  if (req.method === "GET" && p === "/auth/google/callback") return googleCallback(req, url, env);
   if (req.method === "GET" && p === "/api/health")
-    return json({ ok: true, db: !!env.DB, letters: !!env.LETTERS, stripe: !!env.STRIPE_SECRET_KEY, webhook: !!env.STRIPE_WEBHOOK_SECRET, ai: !!env.ANTHROPIC_API_KEY, email: !!(env.RESEND_API_KEY && env.MAIL_FROM),
+    return json({ ok: true, db: !!env.DB, letters: !!env.LETTERS, stripe: !!env.STRIPE_SECRET_KEY, webhook: !!env.STRIPE_WEBHOOK_SECRET, ai: !!env.ANTHROPIC_API_KEY, email: !!(env.RESEND_API_KEY && env.MAIL_FROM), google: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
                   stripe_mode: env.STRIPE_SECRET_KEY ? (env.STRIPE_SECRET_KEY.startsWith("sk_live") ? "live" : "test") : null });
   if (req.method === "POST") {
     if (p === "/api/stripe-webhook") return webhook(req, env);
@@ -138,6 +141,47 @@ async function signinStart(body, url, env) {
   });
   if (!r.ok) { console.error("resend", r.status, await r.text().catch(() => "")); return json({ error: "email_failed" }, 502); }
   return json({ ok: true });
+}
+
+/* ---------- Continue with Google ----------
+   Standard OAuth code flow. The callback turns the verified Google email into the same
+   one-time sign-in code the email link uses, so /api/signin/finish does the account
+   linking (and merging of this browser's letters) in one place. */
+const GOOGLE_STATE_COOKIE = "q_gstate";
+function googleRedirectUri(url) { return url.origin + "/auth/google/callback"; }
+function back(url, reason) { return Response.redirect(url.origin + "/write?signin_error=" + reason, 302); }
+async function googleStart(req, url, env) {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return back(url, "google_off");
+  const state = randomHex(16);
+  const q = new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID, redirect_uri: googleRedirectUri(url), response_type: "code",
+    scope: "openid email", state, prompt: "select_account" });
+  return new Response(null, { status: 302, headers: {
+    Location: "https://accounts.google.com/o/oauth2/v2/auth?" + q,
+    "Set-Cookie": `${GOOGLE_STATE_COOKIE}=${state}; Path=/auth/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+    "Cache-Control": "no-store" } });
+}
+async function googleCallback(req, url, env) {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return back(url, "google_off");
+  const cookie = (req.headers.get("Cookie") || "").split(/;\s*/).find(c => c.startsWith(GOOGLE_STATE_COOKIE + "="));
+  const state = url.searchParams.get("state") || "", code = url.searchParams.get("code") || "";
+  const clear = `${GOOGLE_STATE_COOKIE}=; Path=/auth/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+  const fail = (r) => new Response(null, { status: 302, headers: { Location: url.origin + "/write?signin_error=" + r, "Set-Cookie": clear } });
+  if (url.searchParams.get("error")) return fail("google_cancelled");
+  if (!cookie || !state || !timingSafeEqual(cookie.split("=")[1], state) || !code) return fail("google_state");
+  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ code, client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, redirect_uri: googleRedirectUri(url), grant_type: "authorization_code" }) });
+  if (!r.ok) { console.error("google token", r.status, await r.text().catch(() => "")); return fail("google_failed"); }
+  const tok = await r.json();
+  // The ID token came straight from Google's token endpoint over TLS, so its claims can be read without re-checking the signature.
+  let claims = null;
+  try { const part = tok.id_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"); claims = JSON.parse(atob(part + "===".slice((part.length + 3) % 4))); } catch {}
+  const aud = claims && (Array.isArray(claims.aud) ? claims.aud : [claims.aud]);
+  if (!claims || !aud.includes(env.GOOGLE_CLIENT_ID) || !/accounts\.google\.com$/.test(claims.iss || "") || claims.exp * 1000 < Date.now()
+      || !claims.email || !(claims.email_verified === true || claims.email_verified === "true")) return fail("google_failed");
+  const one = randomHex(24);
+  await env.DB.prepare("INSERT INTO signin_codes (code_hash, email, expires_at) VALUES (?, ?, ?)")
+    .bind(await sha256hex(one), String(claims.email).toLowerCase(), new Date(Date.now() + 5 * 6e4).toISOString()).run();
+  return new Response(null, { status: 302, headers: { Location: url.origin + "/write?signin=" + one, "Set-Cookie": clear, "Cache-Control": "no-store" } });
 }
 
 async function signinFinish(body, env) {
