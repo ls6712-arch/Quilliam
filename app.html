@@ -384,6 +384,27 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
 .cpseg button[aria-pressed="true"]{background:#e0a63a;border-color:#e0a63a;color:#1d1714}
 #cp-fade{width:100%;accent-color:#e0a63a}#cp-fadev{font:600 12.5px Manrope,system-ui,sans-serif;color:var(--muted);min-width:34px;text-align:right}
 @media (max-width:640px){.shelf.solo{grid-template-columns:1fr}.cprow{grid-template-columns:56px 1fr auto}}
+
+/* Quilliam chip (minimised) and phone dock */
+.qchip{display:none;align-items:center;gap:8px;border:1px solid #e8c77f;background:#fbf3df;color:#3b2412;border-radius:999px;padding:8px 13px;font:700 13px Manrope,system-ui,sans-serif;box-shadow:0 10px 24px #0007;cursor:pointer;white-space:nowrap}
+.qdot{width:9px;height:9px;border-radius:50%;background:#c9a14a;flex:none}
+.qchip[data-v="Real ink"] .qdot{background:#2f9e6a}.qchip[data-v="Promising"] .qdot{background:#8fbf5a}
+.qchip[data-v="Hmm…"] .qdot{background:#e0a63a}.qchip[data-v="Smells like a chatbot"] .qdot{background:#e2453c}
+.perch.mini .bubble{display:none}.perch.mini .qchip{display:flex}
+@keyframes qpop{from{transform:translateY(16px) scale(.7);opacity:0}60%{transform:translateY(-3px) scale(1.03);opacity:1}to{transform:none}}
+@media (max-width:760px){
+  body{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .perch{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:none;justify-content:flex-end;gap:8px;pointer-events:none}
+  .perch>*{pointer-events:auto}
+  .owl{width:62px;height:72px}.owl svg{width:62px;height:72px}
+  .bubble{flex:1;min-width:0;max-width:330px;padding:10px 12px 9px;gap:5px;border-radius:14px 14px 4px 14px;position:relative}
+  .perch.pop .bubble{animation:qpop .42s cubic-bezier(.2,1.2,.4,1)}
+  .bub-top{position:absolute;top:2px;right:4px}.bub-top span{display:none}
+  .bubble .quip{font-size:16.5px;line-height:1.28;padding-right:16px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .meter .scale span:first-child,.meter .scale span:last-child{display:none}.meter .scale{justify-content:center}
+  .ask{padding:7px 10px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){.perch.pop .bubble{animation:none}}
 </style>
 
 <div class="wrap">
@@ -1347,20 +1368,20 @@ function update(){
 
 /* ================= Quilliam ================= */
 const LINES={
-  praise:["Ah, a wobbly letter. Wobbles mean a real hand. Carry on.","That loop on your y is pure humanity. I approve.","Real ink! My feathers are fluffing.","You crossed something out. Splendid. Machines never doubt themselves.","Slow and crooked, exactly as letters ought to be."],
-  suspicious:["Hmm. That arrived rather quickly for a heartfelt thought.","I’m squinting at you over my spectacles.","Your rhythm is suspiciously tidy. Are you a toaster?"],
-  roast:["Did you just paste that? I can smell the server farm from here.","‘Delve’? Nobody who loves someone has ever said delve.","This reads like a terms-of-service agreement wearing a Santa hat.","I asked for a letter, not a press release from a robot."],
-  gentle:["Take your time. I’ll wait right here."],
-  roastcard:["A roast! Splendid. Roast your friend, never let a robot do it for you.","Ooh, that one stung. Lovingly, I trust.","Burn level rising. My spectacles are fogging up.","Inferno? Bold. Keep it about their habits, not their heart."],
-  corporate:["A handwritten note from a company? Clients will frame this.","Proper letterhead and real ink. Very distinguished."],
+  praise:["Ah, a wobbly letter. Wobbles mean a real hand. Carry on.","Real ink! My feathers are fluffing.","You crossed something out. Splendid. Machines never doubt themselves.","Slow and crooked, exactly as letters ought to be.","That’s a sentence only you could have written. Keep those coming.","I just read that twice. Don’t tell anyone.","Specific! Glorious, specific detail. Chatbots can’t fake that.","Lovely. Now one more true thing, and they’re done for.","This is the part they’ll quote back to you in ten years.","My spectacles are steaming. That’s a compliment."],
+  suspicious:["Hmm. That arrived rather quickly for a heartfelt thought.","I’m squinting at you over my spectacles.","Your rhythm is suspiciously tidy. Are you a toaster?","That paragraph has the warmth of a printer manual. Try again, in your own voice.","I sense… a server farm. Somewhere in Virginia.","Very polished. Too polished. Real feelings have lumps."],
+  roast:["Did you just paste that? I can smell the server farm from here.","This reads like a terms-of-service agreement wearing a Santa hat.","I asked for a letter, not a press release from a robot.","That sentence has been used by four million people and one very tired chatbot.","Copy, paste, send. The holy trinity of not caring. Prove me wrong.","My grandmother wrote letters by candlelight. You just pressed Cmd+V."],
+  gentle:["Take your time. I’ll wait right here.","No rush. The best letters are written slowly."],
+  roastcard:["A roast! Splendid. Roast your friend, never let a robot do it for you.","Ooh, that one stung. Lovingly, I trust.","Burn level rising. My spectacles are fogging up.","Inferno? Bold. Keep it about their habits, not their heart.","Name one specific crime. Specific is funnier. Always.","Medium-rare. Mention the group-chat incident and we’ll reach well-done."],
+  corporate:["A handwritten note from a company? Clients will frame this.","Proper letterhead and real ink. Very distinguished.","Mention one thing you did together this year. That’s what they’ll remember.","Corporate, but human. The rarest combination. Like a polite pigeon."],
 };
 let lastQuip=0; const qi={praise:0,suspicious:0,roast:0,gentle:0,roastcard:0,corporate:0};
 function quip(mood,force){ const now=Date.now(); if(!force&&now-lastQuip<14000) return false; lastQuip=now; const a=LINES[mood]; $("quip").textContent="“"+a[qi[mood]++%a.length]+"”"; $("bubble").hidden=false; return true; }
 function maybeQuip(){ const sc=score(),sig=signals();
-  if(S.mode==="hand"&&S.strokes.length>=5&&typeof INK_ROASTS!=="undefined"){ const fl=inkCheck().flags.find(f=>INK_ROASTS[f]&&!inkRoasted.has(f)); if(fl&&Date.now()-lastQuip>5000){ inkRoasted.add(fl); say(pick(INK_ROASTS[fl]),fl==="scribble"?"funny":"roast"); return true; } }
+  if(S.mode==="hand"&&S.strokes.length>=5&&typeof INK_ROASTS!=="undefined"){ const fl=inkCheck().flags.find(f=>INK_ROASTS[f]&&!inkRoasted.has(f)); if(fl&&Date.now()-lastQuip>1500){ inkRoasted.add(fl); say(pick(INK_ROASTS[fl]),fl==="scribble"?"funny":"roast"); return true; } }
   if(sig.cl.length&&sc>55) return quip("roast"); if(sc>65) return quip("suspicious");
   const good=S.layout==="roast"?"roastcard":S.layout==="corporate"?"corporate":"praise";
-  if(S.mode==="hand"&&S.strokes.length&&S.strokes.length%10===0&&!inkCheck().flags.length) return quip(good);
+  if(S.mode==="hand"&&S.strokes.length&&!inkCheck().flags.length&&typeof banter==="function") return banter();
   if(S.mode==="type"&&sig.words&&sig.words%25===0&&sc<45) return quip(good); return false; }
 $("hidebub").onclick=()=>{ $("bubble").hidden=true; };
 
@@ -1798,6 +1819,77 @@ setInterval(()=>{
   if(f.seconds>60&&S.strokes.length&&f.seconds/S.strokes.length>9&&!inkRoasted.has("slow")){ inkRoasted.add("slow"); react("One stroke every ten seconds. Are you carving this in marble? Lovely. Keep going.","gentle"); return; }
 },3500);
 { const another=$("another").onclick; $("another").onclick=(e)=>{ inkRoasted=new Set(); verifiedOnce=false; another&&another(e); }; }
+
+/* ================= Quilliam on small screens + handwriting banter ================= */
+// Phones: Quilliam lives in a slim dock. When he speaks the bubble pops up; after a few seconds
+// it shrinks to a chip with his verdict, so it never sits on top of the letter.
+{ const perch=$("perch"), bub=$("bubble");
+  const chip=document.createElement("button"); chip.type="button"; chip.className="qchip"; chip.id="qchip"; chip.setAttribute("aria-label","Show what Quilliam said");
+  chip.innerHTML=`<span class="qdot" aria-hidden="true"></span><span id="qchiptxt">Quilliam is watching</span>`; perch.insertBefore(chip,$("owlbtn"));
+  const small=()=>matchMedia("(max-width:760px)").matches;
+  let tm=0;
+  window.qOpen=(stay)=>{ perch.classList.remove("mini"); bub.hidden=false; clearTimeout(tm); if(small()&&!stay) tm=setTimeout(()=>perch.classList.add("mini"),7000); };
+  const qMini=()=>{ clearTimeout(tm); perch.classList.add("mini"); };
+  new MutationObserver(()=>{ if(small()){ perch.classList.remove("pop"); void perch.offsetWidth; perch.classList.add("pop"); } qOpen(); }).observe($("quip"),{childList:true,characterData:true,subtree:true});
+  new MutationObserver(()=>{ $("qchiptxt").textContent=$("meterlabel").textContent; chip.dataset.v=$("meterlabel").textContent; }).observe($("meterlabel"),{childList:true,characterData:true,subtree:true});
+  $("hidebub").onclick=qMini; chip.onclick=()=>qOpen(true);
+  // Get out of the way while the pen is down.
+  $("pad").addEventListener("pointerdown",()=>{ if(small()) qMini(); });
+  if(small()) setTimeout(()=>perch.classList.add("mini"),6000);
+}
+
+// Banter for handwritten letters. Quilliam can't read handwriting without the AI switched on,
+// so he riffs on everything else he can see: who it's for, the hour, the pace, the paper.
+const BANTER={
+  start:["And we’re off. {to} has no idea what’s coming.","First stroke! The hardest one. Also usually the wobbliest.","Ink on paper. My favourite sound. Well, my second favourite, after mice."],
+  m10:["Ten strokes in. That’s either “Dear” or a very ambitious D.","Ten strokes. A promising start. I’ve seen novels begin with less."],
+  m25:["Twenty-five strokes. A sentence is forming. I can feel it in my feathers.","Twenty-five strokes. {to} is about to feel very special."],
+  m45:["Forty-five strokes! {to} is going to need a chair.","Forty-five strokes. This is already longer than most texts {to} gets in a year."],
+  m70:["Seventy strokes. You’ve officially out-written every greeting card in the shop.","Seventy strokes. I’ve cancelled my evening plans. Mouse hunting can wait."],
+  m100:["A hundred strokes. This isn’t a letter, it’s a family heirloom.","One hundred strokes. Someone call a bookbinder."],
+  noName:["Fifteen strokes and I still don’t know who this is for. A mystery recipient. How Victorian.","Who’s the lucky one? Tap “their name” at the top. I’m dying to know."],
+  name:["{to}. Lovely name. Very “deserves a handwritten letter” energy.","Writing to {to}? Excellent taste in humans.","{to} will read this twice. Once fast, once slowly. Make the slow read count."],
+  lateNight:["Writing at {time}? Letters after midnight are 40% more honest and 60% more dramatic.","{time}. The witching hour for feelings. Carry on, I’m nocturnal anyway."],
+  earlyMorning:["Writing at {time}? Before coffee? That’s either devotion or guilt.","Up at {time} writing letters. The birds and I salute you."],
+  pause:["Long pause. Searching for the word? Take the second one that comes to mind. The first is usually a cliché.","You’ve gone quiet. Thinking, or making tea? Either way, I’ll wait.","Writer’s block? Tell them about one tiny, specific moment. The smaller, the better."],
+  burst:["That came out fast. It must be the true bit.","Ooh, a flurry! Something important is happening on this page."],
+  undo1:["An undo. Second thoughts are the surest sign of a real person."],
+  undo3:["Three undos. A perfectionist. I respect it. Mildly fear it."],
+  stickers5:["Five stickers. Is this a letter or a fridge door?","That’s a lot of stickers. {to} will need sunglasses."],
+  christmas:["Christmas paper in {month}? Organised. Festive. Slightly smug. I love it.","Christmas letters are the only ones people keep in a shoebox for forty years. No pressure."],
+  thanksgiving:["Thanksgiving paper. Tell them the one thing you’re grateful for that you’ve never said out loud."],
+  newyear:["New Year paper. Wish them something specific for 2027. Not “health and happiness.” Something real."],
+  love:["A love letter. I’ll avert my eyes. (I will not avert my eyes.)","Romance! My spectacles are fogging up."],
+  roastcard:["The roast begins. Remember: roast the habits, spare the heart.","Burn level: warming up. Mention something only you two know."],
+  corporate:["A handwritten note from a company? Clients will frame this. The competition will weep."],
+};
+const banterSeen=new Set();
+function bline(key){ const pool=BANTER[key]; if(!pool) return null; const fresh=pool.filter(l=>!banterSeen.has(l)); const l=pick(fresh.length?fresh:pool); banterSeen.add(l);
+  const to=($("to").value||"").trim()||"They", d=new Date();
+  return l.replace(/\{to\}/g,to).replace(/\{time\}/g,d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})).replace(/\{month\}/g,d.toLocaleDateString([], {month:"long"})); }
+const fired=new Set(); let lastStrokeAt=0;
+function banter(){
+  if(S.mode!=="hand") return false;
+  const n=S.strokes.length, now=Date.now(), h=new Date().getHours(), g=paper().group, once=(k,cond,mood="praise")=>{ if(cond&&!fired.has(k)){ const l=bline(k.split(":")[0]); if(l&&react(l,mood)){ fired.add(k); return true; } } return false; };
+  const gap=lastStrokeAt?now-lastStrokeAt:0; lastStrokeAt=now;
+  return once("start",n===1,"praise")
+    || once("pause:"+n,gap>25000&&n>3,"gentle")
+    || once("lateNight",n>=4&&(h>=23||h<4),"funny")
+    || once("earlyMorning",n>=4&&h>=4&&h<7,"funny")
+    || once("name",n>=6&&$("to").value.trim().length>1,"love")
+    || once("noName",n>=15&&!$("to").value.trim(),"funny")
+    || once("roastcard",S.layout==="roast"&&n>=8,"roast")
+    || once("corporate",S.layout==="corporate"&&n>=8,"praise")
+    || once("love",g==="love"&&n>=12,"love")
+    || once("christmas",g==="christmas"&&n>=12,"funny")
+    || once("thanksgiving",g==="thanksgiving"&&n>=12,"praise")
+    || once("newyear",g==="newyear"&&n>=12,"praise")
+    || once("undo1",S.undos===1,"praise") || once("undo3",S.undos===3,"funny")
+    || once("stickers5",S.items.filter(i=>i.type==="sticker").length>=5,"funny")
+    || once("m10",n>=10) || once("m25",n>=25,"love") || once("m45",n>=45,"funny") || once("m70",n>=70,"praise") || once("m100",n>=100,"love")
+    || (gap>0&&gap<350&&n>=20&&n%7===0&&once("burst:"+Math.floor(n/30),true,"funny"));
+}
+{ const another=$("another").onclick; $("another").onclick=(e)=>{ fired.clear(); lastStrokeAt=0; another&&another(e); }; }
 
 /* AI comments on the live site (the Worker keeps the key; nothing is stored) */
 let aiOK=false, aiBusy=false, aiLast=0, aiSig="";
