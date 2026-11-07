@@ -590,7 +590,7 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
     <div><div class="eyebrow">Holiday plans</div><h3 id="plans-h">Keep writing through New Year’s</h3></div>
     <p id="plans-why">You’ve used your free letter. Pick a plan to keep sealing letters.</p>
     <div class="plans">
-      <div class="plan"><span class="pname">Free</span><div class="price">$0</div><ul><li>1 letter</li><li>Era papers and basic stickers</li><li>Quilliam stamp</li></ul><button disabled>Current plan</button></div>
+      <div class="plan"><span class="pname">One letter</span><div class="price">$1.99</div><ul><li>1 letter</li><li>Every paper, layout and seal</li><li>Quilliam stamp and share link</li></ul><button data-plan="one">Buy 1 letter</button></div>
       <div class="plan"><span class="pname">Holiday Pack</span><div class="price">$4.99</div><ul><li>10 letters</li><li>Every paper and layout</li><li>All sticker sets and photos</li></ul><button data-plan="pack">Get 10 letters</button></div>
       <div class="plan best"><span class="badge">Most popular</span><span class="pname">Season Pass</span><div class="price">$9.99 <small>until Jan 1</small></div><ul><li>Unlimited letters</li><li>Every paper, layout and sticker</li><li>Quilliam’s full commentary</li></ul><button data-plan="season">Get the Season Pass</button></div>
       <div class="plan"><span class="pname">Business</span><div class="price">$199<small>+</small></div><ul><li>100+ client letters</li><li>Your letterhead and brand color</li><li>Your logo pressed into the seal</li></ul><button data-plan="biz">Talk to us</button></div>
@@ -1394,8 +1394,9 @@ document.querySelectorAll("[data-plan]").forEach(b=>b.onclick=async()=>{ const k
     catch(e){ toast(e.data&&e.data.error==="stripe_not_configured"?"Payments are being set up. Check back very soon.":"Checkout didn’t open. Try again in a minute."); }
     b.disabled=false; b.textContent=old; return;
   }
-  if(k==="season"){ S.plan="season"; store.set("q.plan","season"); } else { S.credits+=10; store.set("q.credits",S.credits); }
-  renderCredits(); $("plans").hidden=true; toast(k==="season"?"Season Pass added (preview)":"10 letters added (preview)"); });
+  const add=k==="one"?1:10;
+  if(k==="season"){ S.plan="season"; store.set("q.plan","season"); } else { S.credits+=add; store.set("q.credits",S.credits); }
+  renderCredits(); $("plans").hidden=true; toast(k==="season"?"Season Pass added (preview)":`${add} letter${add===1?"":"s"} added (preview)`); });
 
 /* ================= Render the finished letter ================= */
 async function renderLetterImage(){
@@ -2200,7 +2201,7 @@ if(API!==null){
     const sid=qp.get("paid");
     if(qp.has("paid")||qp.has("canceled")||qp.has("plans")) history.replaceState(null,"",location.pathname+(qp.get("to")?"?to="+encodeURIComponent(qp.get("to")):""));
     if(sid){
-      try{ const r=await api("/api/confirm",{token:S.token,session_id:sid}); applyAccount(r.account); toast(r.plan==="season"?"Season Pass active. Write away!":"10 letters added. Thank you!"); }
+      try{ const r=await api("/api/confirm",{token:S.token,session_id:sid}); applyAccount(r.account); toast(r.plan==="season"?"Season Pass active. Write away!":r.plan==="one"?"Your letter is paid for. Thank you!":"10 letters added. Thank you!"); }
       catch(e){ toast("Payment received. Your letters will appear in a moment."); setTimeout(async()=>{ try{ applyAccount(await api("/api/me",{token:S.token})); }catch(e2){} },5000); }
     } else if(qp.has("canceled")) toast("Checkout canceled. Nothing was charged.");
     if(qp.has("plans")) openPlans("Every plan includes Quilliam’s stamp, every paper and every sticker.");

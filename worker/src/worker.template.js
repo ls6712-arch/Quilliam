@@ -14,6 +14,7 @@
 //   GOOGLE_CLIENT_ID       turns on "Continue with Google" (with GOOGLE_CLIENT_SECRET as a secret)
 
 const PLANS = {
+  one:    { name: "Quilliam letter (1 letter)", amount: 199, credits: 1 },
   pack:   { name: "Quilliam Holiday Pack (10 letters)", amount: 499, credits: 10 },
   season: { name: "Quilliam Season Pass (unlimited letters until Jan 1)", amount: 999, season: true },
 };
@@ -614,7 +615,7 @@ const LEGAL = {
 <p class="fine">Last updated November 2026</p>
 <p>If something went wrong, we'll make it right.</p>
 <ul>
-<li><b>Unused letter packs</b>: full refund within 30 days of purchase if you haven't sealed any letters from the pack.</li>
+<li><b>Unused letters and packs</b>: full refund within 30 days of purchase if you haven't sealed any letters from the pack.</li>
 <li><b>Partly used packs and the Season Pass</b>: refund within 14 days if Quilliam didn't work for you. Tell us what happened.</li>
 <li><b>Charged twice or a letter didn't send</b>: always refunded or credited back.</li>
 </ul>
