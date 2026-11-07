@@ -7,6 +7,10 @@
 // Secrets (Worker settings → Variables and Secrets, type "Secret"):
 //   STRIPE_SECRET_KEY      sk_test_... while testing, sk_live_... when you launch
 //   STRIPE_WEBHOOK_SECRET  whsec_... from the Stripe webhook you create
+//   ANTHROPIC_API_KEY      optional, turns on Quilliam's AI comments
+//   RESEND_API_KEY         optional, turns on email sign-in links (needs MAIL_FROM too)
+// Variables (plain text):
+//   MAIL_FROM              e.g. "Quilliam <hello@yourdomain.com>" on a domain verified in Resend
 
 const PLANS = {
   pack:   { name: "Quilliam Holiday Pack (10 letters)", amount: 499, credits: 10 },
@@ -15,6 +19,8 @@ const PLANS = {
 const SEASON_END = "2027-01-01T05:00:00.000Z"; // midnight New York time, Jan 1 2027
 const FREE_LETTERS = 1;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+
+const NEW_ACCOUNTS_PER_IP_PER_DAY = 10; // generous: offices, campuses and phone carriers share addresses
 
 const APP_HTML = __APP_HTML__;
 const LANDING_HTML = __LANDING_HTML__;
@@ -33,14 +39,20 @@ async function route(req, env) {
   if (req.method === "GET" && (p === "/write" || p === "/write/")) return page(APP_HTML);
   if (req.method === "GET" && p.startsWith("/l/")) return letterPage(p.slice(3), url, env);
   if (req.method === "GET" && p.startsWith("/img/")) return letterImage(p.slice(5), url, env);
+  if (req.method === "GET" && LEGAL[p.replace(/\/$/, "")]) return legalPage(p.replace(/\/$/, ""), url);
   if (req.method === "GET" && p === "/api/health")
-    return json({ ok: true, db: !!env.DB, letters: !!env.LETTERS, stripe: !!env.STRIPE_SECRET_KEY, webhook: !!env.STRIPE_WEBHOOK_SECRET, ai: !!env.ANTHROPIC_API_KEY,
+    return json({ ok: true, db: !!env.DB, letters: !!env.LETTERS, stripe: !!env.STRIPE_SECRET_KEY, webhook: !!env.STRIPE_WEBHOOK_SECRET, ai: !!env.ANTHROPIC_API_KEY, email: !!(env.RESEND_API_KEY && env.MAIL_FROM),
                   stripe_mode: env.STRIPE_SECRET_KEY ? (env.STRIPE_SECRET_KEY.startsWith("sk_live") ? "live" : "test") : null });
   if (req.method === "POST") {
     if (p === "/api/stripe-webhook") return webhook(req, env);
     const body = await readJson(req);
     if (body === null) return json({ error: "bad_request" }, 400);
-    if (p === "/api/me") return me(body, env);
+    if (p === "/api/me") return me(body, env, req);
+    if (p === "/api/letters") return myLetters(body, url, env);
+    if (p === "/api/redeem") return redeem(body, env);
+    if (p === "/api/signin/start") return signinStart(body, url, env);
+    if (p === "/api/signin/finish") return signinFinish(body, env);
+    if (p === "/api/contact") return contact(body, env);
     if (p === "/api/checkout") return checkout(body, url, env);
     if (p === "/api/confirm") return confirm(body, env);
     if (p === "/api/seal") return seal(body, url, env);
@@ -58,17 +70,115 @@ function randomId() { const a = crypto.getRandomValues(new Uint8Array(12)); retu
 
 async function account(env, token) {
   if (!token || !TOKEN_RE.test(token)) return null;
-  const row = await env.DB.prepare("SELECT token, credits, season_until FROM buyers WHERE token = ?").bind(token).first();
+  const row = await env.DB.prepare("SELECT token, credits, season_until, email FROM buyers WHERE token = ?").bind(token).first();
   if (!row) return null;
-  return { token: row.token, credits: row.credits, season: !!row.season_until && row.season_until > new Date().toISOString(), season_until: row.season_until };
+  return { token: row.token, credits: row.credits, season: !!row.season_until && row.season_until > new Date().toISOString(), season_until: row.season_until, email: row.email || null };
 }
 
-async function me(body, env) {
+async function me(body, env, req) {
   const existing = await account(env, body.token);
   if (existing) return json(existing);
+  // The free letter is limited per network so it can't be farmed by clearing the browser.
+  const ip = req.headers.get("cf-connecting-ip") || "local";
+  const day = new Date().toISOString().slice(0, 10);
+  const seen = await env.DB.prepare("INSERT INTO signup_ips (ip, day, n) VALUES (?, ?, 1) ON CONFLICT(ip, day) DO UPDATE SET n = n + 1 RETURNING n").bind(ip, day).first();
+  const free = seen && seen.n > NEW_ACCOUNTS_PER_IP_PER_DAY ? 0 : FREE_LETTERS;
   const token = randomHex(24);
-  await env.DB.prepare("INSERT INTO buyers (token, credits) VALUES (?, ?)").bind(token, FREE_LETTERS).run();
+  await env.DB.prepare("INSERT INTO buyers (token, credits) VALUES (?, ?)").bind(token, free).run();
   return json(await account(env, token));
+}
+
+/* ---------- my letters ---------- */
+async function myLetters(body, url, env) {
+  const acct = await account(env, body.token);
+  if (!acct) return json({ error: "unknown_buyer" }, 400);
+  const { results } = await env.DB.prepare("SELECT id, to_name, created_at, unlock_at, lock_hash, certified FROM letters WHERE token = ? ORDER BY created_at DESC LIMIT 100").bind(acct.token).all();
+  return json({ letters: results.map(r => ({ id: r.id, url: url.origin + "/l/" + r.id, to: r.to_name || "", created_at: r.created_at, unlock_at: r.unlock_at, locked: !!r.lock_hash, certified: !!r.certified })) });
+}
+
+/* ---------- gift, promo and company codes ---------- */
+// Create codes in D1, e.g.:
+//   INSERT INTO codes (code, credits, max_uses, expires_at, note) VALUES ('FRIENDS5', 5, 100, '2026-12-31T23:59:59Z', 'launch');
+//   INSERT INTO codes (code, season, max_uses, note) VALUES ('ACME-TEAM', 1, 40, 'Acme Inc. 40 seats');
+async function redeem(body, env) {
+  const acct = await account(env, body.token);
+  if (!acct) return json({ error: "unknown_buyer" }, 400);
+  const code = typeof body.code === "string" ? body.code.trim().toUpperCase().replace(/\s+/g, "").slice(0, 40) : "";
+  if (!/^[A-Z0-9_-]{3,40}$/.test(code)) return json({ error: "unknown_code" }, 404);
+  const c = await env.DB.prepare("SELECT * FROM codes WHERE code = ?").bind(code).first();
+  if (!c) return json({ error: "unknown_code" }, 404);
+  if (c.expires_at && c.expires_at < new Date().toISOString()) return json({ error: "expired" }, 410);
+  const taken = await env.DB.prepare("UPDATE codes SET uses = uses + 1 WHERE code = ? AND (max_uses IS NULL OR uses < max_uses)").bind(code).run();
+  if (!taken.meta || taken.meta.changes !== 1) return json({ error: "used_up" }, 410);
+  const ins = await env.DB.prepare("INSERT OR IGNORE INTO redemptions (code, token) VALUES (?, ?)").bind(code, acct.token).run();
+  if (!ins.meta || ins.meta.changes !== 1) { await env.DB.prepare("UPDATE codes SET uses = uses - 1 WHERE code = ?").bind(code).run(); return json({ error: "already" }, 409); }
+  if (c.season) await env.DB.prepare("UPDATE buyers SET season_until = ? WHERE token = ?").bind(SEASON_END, acct.token).run();
+  if (c.credits) await env.DB.prepare("UPDATE buyers SET credits = credits + ? WHERE token = ?").bind(c.credits, acct.token).run();
+  const parts = [c.credits ? `${c.credits} letter${c.credits === 1 ? "" : "s"}` : "", c.season ? "unlimited letters until Jan 1" : ""].filter(Boolean);
+  return json({ message: "Code applied: " + (parts.join(" and ") || "enjoy") + ".", account: await account(env, acct.token) });
+}
+
+/* ---------- email sign-in (magic link) ---------- */
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
+async function signinStart(body, url, env) {
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 254) : "";
+  if (!EMAIL_RE.test(email)) return json({ error: "bad_email" }, 400);
+  if (!env.RESEND_API_KEY || !env.MAIL_FROM) return json({ error: "email_not_configured" }, 503);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM signin_codes WHERE email = ? AND created_at > datetime('now', '-1 hour')").bind(email).first();
+  if (recent && recent.n >= 5) return json({ error: "rate_limited" }, 429);
+  const code = randomHex(24);
+  await env.DB.prepare("INSERT INTO signin_codes (code_hash, email, expires_at) VALUES (?, ?, ?)").bind(await sha256hex(code), email, new Date(Date.now() + 30 * 6e4).toISOString()).run();
+  const link = url.origin + "/write?signin=" + code;
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: env.MAIL_FROM, to: [email], subject: "Your Quilliam sign-in link",
+      text: `Tap to sign in to Quilliam:\n${link}\n\nThe link works once, for 30 minutes. If you didn't ask for it, ignore this email.`,
+      html: `<div style="font-family:Georgia,serif;font-size:16px;color:#2b2420"><p>Hoo! Here is your sign-in link for Quilliam.</p><p><a href="${link}" style="display:inline-block;background:#b3341f;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none">Sign in to Quilliam</a></p><p style="color:#776">It works once, for 30 minutes. If you didn't ask for it, ignore this email.</p></div>` }),
+  });
+  if (!r.ok) { console.error("resend", r.status, await r.text().catch(() => "")); return json({ error: "email_failed" }, 502); }
+  return json({ ok: true });
+}
+
+async function signinFinish(body, env) {
+  const code = typeof body.code === "string" ? body.code : "";
+  if (!/^[a-f0-9]{48}$/.test(code)) return json({ error: "bad_code" }, 400);
+  const h = await sha256hex(code);
+  const used = await env.DB.prepare("UPDATE signin_codes SET used = 1 WHERE code_hash = ? AND used = 0 AND expires_at > ? RETURNING email").bind(h, new Date().toISOString()).first();
+  if (!used) return json({ error: "expired" }, 410);
+  const email = used.email;
+  const here = await account(env, body.token);
+  const owner = await env.DB.prepare("SELECT token FROM buyers WHERE email = ?").bind(email).first();
+  if (!owner) {
+    // First sign-in: this browser's account becomes the email's account.
+    if (here && !here.email) { await env.DB.prepare("UPDATE buyers SET email = ? WHERE token = ?").bind(email, here.token).run(); return json({ email, account: await account(env, here.token) }); }
+    const token = randomHex(24);
+    await env.DB.prepare("INSERT INTO buyers (token, credits, email) VALUES (?, 0, ?)").bind(token, email).run();
+    return json({ email, account: await account(env, token) });
+  }
+  if (here && here.token !== owner.token && !here.email) {
+    // Bring this browser's letters along, plus any letters it paid for (not a second free letter).
+    const paid = await env.DB.prepare("SELECT COUNT(*) AS n FROM purchases WHERE token = ?").bind(here.token).first();
+    const coded = await env.DB.prepare("SELECT COUNT(*) AS n FROM redemptions WHERE token = ?").bind(here.token).first();
+    const carry = (paid && paid.n) || (coded && coded.n) ? here.credits : 0;
+    await env.DB.batch([
+      env.DB.prepare("UPDATE letters SET token = ? WHERE token = ?").bind(owner.token, here.token),
+      env.DB.prepare("UPDATE purchases SET token = ? WHERE token = ?").bind(owner.token, here.token),
+      env.DB.prepare("UPDATE buyers SET credits = credits + ?, season_until = CASE WHEN ? > IFNULL(season_until, '') THEN ? ELSE season_until END WHERE token = ?")
+        .bind(carry, here.season_until || "", here.season_until || null, owner.token),
+      env.DB.prepare("UPDATE buyers SET credits = 0, season_until = NULL WHERE token = ?").bind(here.token),
+    ]);
+  }
+  return json({ email, account: await account(env, owner.token) });
+}
+
+/* ---------- contact ---------- */
+async function contact(body, env) {
+  const clip = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+  const name = clip(body.name, 80), email = clip(body.email, 120), topic = clip(body.topic, 40), message = clip(body.message, 4000);
+  if (!EMAIL_RE.test(email) || message.length < 3) return json({ error: "bad_request" }, 400);
+  await env.DB.prepare("INSERT INTO contact_messages (name, email, topic, message) VALUES (?, ?, ?, ?)").bind(name, email, topic, message).run();
+  return json({ ok: true });
 }
 
 /* ---------- Stripe ---------- */
@@ -185,17 +295,31 @@ async function seal(body, url, env) {
   const lockQ = clip(typeof meta.lock_q === "string" ? meta.lock_q.trim() : null, 100) || null;
   const lockA = typeof meta.lock_a === "string" ? normAnswer(meta.lock_a).slice(0, 60) : "";
   const lockHash = lockQ && lockA ? await sha256hex(id + ":" + lockA) : null;
+  const sealO = cleanSeal(meta.seal_o);
   try {
     await env.LETTERS.put("img:" + id, bytes, { metadata: { type: m[1] } });
-    await env.DB.prepare("INSERT INTO letters (id, token, to_name, from_name, paper, layout, certified, strokes, words, unlock_at, lock_q, lock_hash, seal_c, seal_d, seal_g) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    await env.DB.prepare("INSERT INTO letters (id, token, to_name, from_name, paper, layout, certified, strokes, words, unlock_at, lock_q, lock_hash, seal_c, seal_d, seal_g, seal_o) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       .bind(id, acct.token, clip(meta.to, 40), clip(meta.from, 40), clip(meta.paper, 40), clip(meta.layout, 20),
             meta.certified ? 1 : 0, Number(meta.strokes) || 0, Number(meta.words) || 0,
-            unlockAt, lockHash ? lockQ : null, lockHash, hex(meta.seal_c), hex(meta.seal_d), clip(meta.seal_g, 2)).run();
+            unlockAt, lockHash ? lockQ : null, lockHash, hex(meta.seal_c), hex(meta.seal_d), clip(meta.seal_g, 2), sealO ? JSON.stringify(sealO) : null).run();
   } catch (e) {
     if (!acct.season) await env.DB.prepare("UPDATE buyers SET credits = credits + 1 WHERE token = ?").bind(acct.token).run();
     throw e;
   }
   return json({ id, url: url.origin + "/l/" + id, account: await account(env, acct.token) });
+}
+
+function cleanSeal(o) {
+  if (!o || typeof o !== "object") return null;
+  const pick = (v, set) => (typeof v === "string" && Object.prototype.hasOwnProperty.call(set, v) ? v : null);
+  const out = { shape: pick(o.shape, SEAL_SHAPES) || "classic", color: pick(o.color, WAX) || "crimson", emblem: pick(o.emblem, SEAL_EMBLEMS) || "heart",
+    finish: pick(o.finish, SEAL_FINISHES) || "wax", letter: typeof o.letter === "string" ? o.letter.replace(/[^A-Za-z]/g, "").slice(0, 1).toUpperCase() : "" };
+  return out;
+}
+function envelopeSeal(row) {
+  let o = null; try { o = row.seal_o ? cleanSeal(JSON.parse(row.seal_o)) : null; } catch {}
+  if (!o) o = { shape: "classic", color: "crimson", emblem: "heart", finish: "wax", letter: "" };
+  return waxSeal(o);
 }
 
 function normAnswer(a) { return String(a || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
@@ -223,7 +347,7 @@ async function letterPage(id, url, env) {
   const og = `<meta property="og:title" content="${title}"><meta property="og:description" content="${gated ? "A sealed letter, handwritten on Quilliam." : "Handwritten on Quilliam" + (row.certified ? ", certified human-written." : ".")}">` +
     (gated ? "" : `<meta property="og:image" content="${url.origin}/img/${row.id}"><meta name="twitter:card" content="summary_large_image">`);
   const data = { id: row.id, to: row.to_name || "", from: row.from_name || "", certified: !!row.certified, unlockAt: row.unlock_at || null,
-    question: row.lock_hash ? row.lock_q : null, c: row.seal_c || "#b3341f", d: row.seal_d || "#7e1d0f", g: row.seal_g || "♥" };
+    question: row.lock_hash ? row.lock_q : null };
   const body = `<main class="wrap env-page">
     <p class="eyebrow" id="eyebrow">A letter for ${to}</p>
     <h1 id="headline">${from} sent you a letter</h1>
@@ -233,7 +357,7 @@ async function letterPage(id, url, env) {
         <div class="env-letter" id="envLetter"><img id="letterImg" alt="Handwritten letter from ${from} to ${to}"></div>
         <div class="env-front"><div class="env-addr"><small>For</small><span>${to}</span></div><div class="env-stamp">Q<small>HUMAN POST</small></div></div>
         <div class="env-flap" id="flap"></div>
-        <div class="env-seal" id="seal"></div>
+        <div class="env-seal" id="seal">${envelopeSeal(row)}</div>
       </div>
     </div>
     <div class="gate" id="gate"></div>
@@ -268,7 +392,7 @@ const ENVELOPE_CSS = `
 .env-stamp{width:14%;aspect-ratio:4/5;background:#fffaf0;border:3px dotted #e2cfa9;outline:1px solid #c9a878;display:grid;place-items:center;color:#7a2c1c;font:italic 800 clamp(16px,4vw,26px)/1 "Fraunces",serif;align-self:flex-end;transform:rotate(4deg)}
 .env-stamp small{font:700 6px Manrope,sans-serif;letter-spacing:.08em}
 .env-flap{position:absolute;left:0;right:0;top:0;height:56%;z-index:3;transform-origin:top;background:linear-gradient(180deg,#e9d6b0,#dcc395);clip-path:polygon(0 0,100% 0,50% 100%);transition:transform .7s cubic-bezier(.5,0,.3,1);border-radius:10px 10px 0 0}
-.env-seal{position:absolute;left:50%;top:56%;width:17%;aspect-ratio:1;z-index:4;transform:translate(-50%,-50%);transition:transform .35s,opacity .35s;filter:drop-shadow(0 4px 6px #0006)}
+.env-seal{position:absolute;left:50%;top:56%;width:21%;aspect-ratio:1;z-index:4;transform:translate(-50%,-50%);transition:transform .35s,opacity .35s;filter:drop-shadow(0 4px 6px #0006)}
 .env-seal svg{width:100%;height:100%}
 .envelope.open .env-seal{transform:translate(-50%,-50%) scale(1.25) rotate(18deg);opacity:0}
 .envelope.open .env-flap{transform:rotateX(180deg);z-index:0}
@@ -299,8 +423,6 @@ const ENVELOPE_CSS = `
 const ENVELOPE_JS = `
 (()=>{
 const L=window.LETTER, $=id=>document.getElementById(id), env=$("envelope"), gate=$("gate");
-const sealSVG='<svg viewBox="0 0 80 80"><path d="M40 4 l7 5 8-2 4 7 8 2 1 8 6 5-3 8 3 8-6 5-1 8-8 2-4 7-8-2-7 5-7-5-8 2-4-7-8-2-1-8-6-5 3-8-3-8 6-5 1-8 8-2 4-7 8 2z" fill="'+L.d+'"/><circle cx="40" cy="40" r="27" fill="'+L.c+'"/><circle cx="40" cy="40" r="21" fill="none" stroke="'+L.d+'" stroke-width="2"/><text x="40" y="49" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#fff4e0">'+L.g.replace(/[<>&]/g,"")+'</text></svg>';
-$("seal").innerHTML=sealSVG;
 let key="";
 const norm=a=>String(a||"").toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
 async function hash(t){ const d=new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t))); return [...d].map(b=>b.toString(16).padStart(2,"0")).join(""); }
@@ -405,6 +527,75 @@ async function quilliam(body, env) {
   const moods = ["praise", "love", "funny", "suspicious", "roast", "gentle"];
   if (!parsed || typeof parsed.line !== "string") return json({ error: "ai_unavailable" }, 502);
   return json({ mood: moods.includes(parsed.mood) ? parsed.mood : "praise", line: parsed.line.replace(/\s+/g, " ").trim().slice(0, 220) });
+}
+
+/* ---------- wax seals (shared with app.html) ---------- */
+__SEALGEN__
+
+/* ---------- policy pages ---------- */
+const LEGAL = {
+  "/terms": ["Terms of use", `
+<p class="fine">Last updated November 2026</p>
+<p>Quilliam lets you write a letter by hand on screen, seal it and share it with a private link. By using Quilliam you agree to these terms.</p>
+<h2>Your letters</h2>
+<p>You own what you write. You give us permission to store your letter and show it to anyone who has its link, only so we can deliver it. Don't write anything illegal, threatening, harassing or that you don't have the right to share, and don't upload photos of other people without their permission. We may remove letters that break these rules.</p>
+<h2>Links are private, not secret</h2>
+<p>Anyone with a letter's link can open it (after its delivery date and secret question, if you set them). Share links only with the people you mean to read them.</p>
+<h2>Letters and passes</h2>
+<p>Your first letter is free. Letter packs don't expire. The Season Pass gives unlimited letters until midnight on January 1, 2027, New York time. Codes can't be exchanged for cash.</p>
+<h2>Quilliam the owl</h2>
+<p>Quilliam's comments and the “human-written” stamp are playful judgments based on how a letter was made on our site. They are not a guarantee.</p>
+<h2>Availability</h2>
+<p>We work to keep Quilliam running and your letters available, but the service is provided as is. To the extent the law allows, we aren't liable for indirect losses, and our total liability is limited to what you paid us in the last 12 months.</p>
+<h2>Changes</h2>
+<p>We may update these terms. If a change matters, we'll say so on the site.</p>
+<p>Questions? <a href="/contact">Contact us</a>.</p>`],
+  "/privacy": ["Privacy", `
+<p class="fine">Last updated November 2026</p>
+<h2>What we keep</h2>
+<ul>
+<li><b>Your letters</b>: the image of each sealed letter, the names on it, the paper and seal you chose, its delivery date, and a one-way fingerprint of the secret answer (never the answer itself).</li>
+<li><b>Your account</b>: a random key stored in your browser, your letter balance and, if you sign in, your email address.</li>
+<li><b>Payments</b>: handled by Stripe. We never see your card number. We keep the purchase amount and the email Stripe gives us.</li>
+<li><b>Forms</b>: what you send us through the contact, business or mailed-letter forms.</li>
+<li><b>Abuse prevention</b>: a daily count of new accounts per network address, so the free letter can't be farmed.</li>
+</ul>
+<h2>Quilliam's comments</h2>
+<p>When the owl's smart comments are on, a short excerpt of what you're writing (or a small picture of your handwriting) is sent to our AI provider, Anthropic, to write one remark. We don't store it, and it isn't used to train models.</p>
+<h2>What we don't do</h2>
+<p>No ads, no selling your data, no tracking pixels.</p>
+<h2>Your choices</h2>
+<p>To delete a letter or your account, <a href="/contact">contact us</a> with the letter link or your email and we'll remove it.</p>`],
+  "/refunds": ["Refunds", `
+<p class="fine">Last updated November 2026</p>
+<p>If something went wrong, we'll make it right.</p>
+<ul>
+<li><b>Unused letter packs</b>: full refund within 30 days of purchase if you haven't sealed any letters from the pack.</li>
+<li><b>Partly used packs and the Season Pass</b>: refund within 14 days if Quilliam didn't work for you. Tell us what happened.</li>
+<li><b>Charged twice or a letter didn't send</b>: always refunded or credited back.</li>
+</ul>
+<p>To ask for a refund, <a href="/contact">contact us</a> with the email you used at checkout. Refunds go back to your original payment method through Stripe and usually arrive in 5 to 10 business days.</p>`],
+  "/contact": ["Contact", `
+<p>Questions, refunds, company orders or a letter that needs removing: write to us here and we'll reply by email.</p>
+<form class="cform" id="cf">
+<label>Your name<input name="name" autocomplete="name" maxlength="80"></label>
+<label>Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>
+<label>Topic<select name="topic"><option>Question</option><option>Refund</option><option>Company order</option><option>Remove a letter</option><option>Something's broken</option></select></label>
+<label>Message<textarea name="message" rows="6" required maxlength="4000"></textarea></label>
+<button class="btn primary" type="submit">Send</button>
+<p class="fine" id="cm" role="status"></p>
+</form>
+<script>
+document.getElementById("cf").addEventListener("submit",async e=>{e.preventDefault();const f=e.target,m=document.getElementById("cm");
+const r=await fetch("/api/contact",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.fromEntries(new FormData(f)))}).catch(()=>null);
+if(r&&r.ok){f.reset();m.textContent="Thanks. We'll reply by email soon.";}else m.textContent="That didn't send. Check your email address and try again.";});
+</script>`],
+};
+function legalPage(p, url) {
+  const [title, html] = LEGAL[p];
+  const nav = Object.entries(LEGAL).map(([k, v]) => `<a href="${k}"${k === p ? ' aria-current="page"' : ""}>${v[0]}</a>`).join("");
+  return page(shell(title + " · Quilliam", `<main class="wrap legal"><p class="eyebrow"><a href="/">Quilliam</a></p><h1>${title}</h1>${html}<nav class="legalnav">${nav}<a href="/write">Write a letter</a></nav></main>`,
+    `<style>.legal h2{font:italic 800 22px/1.2 Fraunces,Georgia,serif;margin:18px 0 0}.legal p,.legal li{color:#d9ccbd;max-width:62ch}.legal ul{padding-left:20px;display:grid;gap:6px}.legalnav{display:flex;flex-wrap:wrap;gap:14px;margin-top:24px;padding-top:16px;border-top:1px solid #3a3029}.legalnav a[aria-current]{color:#f1e7da;text-decoration:none}.cform{display:grid;gap:12px;max-width:520px}.cform label{display:grid;gap:6px;font-weight:700;font-size:14px}.cform input,.cform select,.cform textarea{font:inherit;color:#f1e7da;background:#231c17;border:1px solid #3a3029;border-radius:10px;padding:11px 12px}.cform button{justify-self:start;cursor:pointer;font:inherit;font-weight:700}</style>`));
 }
 
 /* ---------- helpers ---------- */

@@ -17,7 +17,7 @@ png=base64.b64encode(bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000
 s,r=post("/api/seal",{"token":tok,"image":"data:image/png;base64,"+png,"meta":{"to":"Maya","from":"Raj <b>","certified":True,"layout":"classic","paper":"Evergreen"}})
 ok(s==200 and r["account"]["credits"]==0,"sealing spends the free letter"); lid=r["id"]; print("     share url:",r["url"])
 s,r2=post("/api/seal",{"token":tok,"image":"data:image/png;base64,"+png,"meta":{}}); ok(s==402 and r2["error"]=="no_credits","out of letters returns 402")
-s,ct,body=get("/l/"+lid); ok(s==200 and b"Raj &lt;b&gt; wrote you a letter" in body and b"certified" in body,"share page renders, escapes names, shows certified")
+s,ct,body=get("/l/"+lid); ok(s==200 and b"Raj &lt;b&gt; sent you a letter" in body and b"certified" in body,"share page renders, escapes names, shows certified")
 s,ct,body=get("/img/"+lid); ok(s==200 and ct=="image/png" and body[:4]==b"\x89PNG","letter image serves")
 s,ct,body=get("/l/notarealid12345"); ok(s==404,"unknown letter is 404")
 s,r=post("/api/checkout",{"token":tok,"plan":"pack"}); ok(s==503 and r["error"]=="stripe_not_configured","checkout says not configured without Stripe key")

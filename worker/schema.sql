@@ -14,3 +14,13 @@ ALTER TABLE letters ADD COLUMN seal_c TEXT;
 ALTER TABLE letters ADD COLUMN seal_d TEXT;
 ALTER TABLE letters ADD COLUMN seal_g TEXT;
 CREATE TABLE IF NOT EXISTS quilliam_usage (token TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (token, day));
+-- 2026-11: accounts, codes, sign-in, contact, wax seal designer
+ALTER TABLE buyers ADD COLUMN email TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS buyers_email ON buyers(email);
+ALTER TABLE letters ADD COLUMN seal_o TEXT;
+CREATE TABLE IF NOT EXISTS codes (code TEXT PRIMARY KEY, credits INTEGER NOT NULL DEFAULT 0, season INTEGER NOT NULL DEFAULT 0, max_uses INTEGER, uses INTEGER NOT NULL DEFAULT 0, expires_at TEXT, note TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS redemptions (code TEXT NOT NULL, token TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (code, token));
+CREATE TABLE IF NOT EXISTS signin_codes (code_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE INDEX IF NOT EXISTS signin_email ON signin_codes(email, created_at);
+CREATE TABLE IF NOT EXISTS contact_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT NOT NULL, topic TEXT, message TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS signup_ips (ip TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (ip, day));

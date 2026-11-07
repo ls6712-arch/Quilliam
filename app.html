@@ -330,6 +330,43 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
 .envelope svg{width:64px;flex:none}
 .envelope p{color:#6b4423;font-size:13px}
 .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#fbf3df;color:#3b2412;border-radius:999px;padding:8px 16px;font-weight:600;font-size:13px;z-index:60;box-shadow:0 10px 24px #0008;max-width:calc(100vw - 32px);text-align:center}
+
+.appfoot{text-align:center;font-size:12.5px;color:var(--muted);margin:28px 0 8px}.appfoot a{color:var(--muted)}
+/* account */
+.acctbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line,#3a3029);background:transparent;color:inherit;border-radius:999px;padding:7px 12px;font:600 13px Manrope,system-ui,sans-serif;cursor:pointer}
+.acctbtn svg{width:15px;height:15px}
+.acct{display:grid;gap:12px;max-height:88vh;overflow:auto}
+.acct-head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.acct .x{border:0;background:transparent;color:inherit;font-size:26px;line-height:1;cursor:pointer;padding:2px 6px}
+.acct-status{margin:0;font-size:17px}
+.acct .muted,.acct-letters .muted{color:#a6978a;font-size:13px;margin:0}
+.acct-row{display:grid;gap:6px;border-top:1px solid #ffffff14;padding-top:12px}
+.acct-row label,.acct-row h4{font:700 13px Manrope,system-ui,sans-serif;margin:0}
+.inrow{display:flex;gap:8px}.inrow input{flex:1;min-width:0;font:inherit;font-size:14px;color:inherit;background:#00000033;border:1px solid #ffffff24;border-radius:10px;padding:10px 12px}
+.inrow .btn{white-space:nowrap}
+.formmsg{margin:0;font-size:12.5px;color:#a6978a;min-height:1em}.formmsg.ok{color:#8fe0b8}.formmsg.err{color:#ffb4a6}
+.acct-letters{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:220px;overflow:auto}
+.acct-letters a{display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:10px;background:#ffffff0d;color:inherit;text-decoration:none;font-size:14px}
+.acct-letters a:hover{background:#ffffff1a}.acct-letters a span{color:#a6978a;font-size:12.5px;text-align:right}
+.acct-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;border-top:1px solid #ffffff14;padding-top:10px}.acct-foot a{color:#a6978a}
+.linkish{border:0;background:none;color:#e0a63a;font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+@media (max-width:520px){.inrow{flex-direction:column}}
+/* seal designer */
+.sealdesign{display:grid;gap:10px}
+.sealtop{display:grid;grid-template-columns:108px 1fr;gap:12px;align-items:center}
+#sealpreview{width:108px;height:108px;filter:drop-shadow(0 6px 10px #0007)}
+.sealpresets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slpre,.slopt{border:1px solid #ffffff1c;background:#ffffff08;border-radius:10px;padding:3px;cursor:pointer;aspect-ratio:1;display:grid;place-items:center}
+.slpre img,.slopt img{width:100%;height:100%}
+.slpre:hover,.slopt:hover{border-color:#e0a63a88}.slopt[aria-pressed="true"]{border-color:#e0a63a;background:#e0a63a22}
+.sealrow{display:grid;gap:5px}.sealrow>span,.sealrow>label{font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a6978a}
+.sealopts{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px}
+.sealswatches{display:flex;flex-wrap:wrap;gap:6px}
+.slsw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;box-shadow:inset 0 -2px 4px #0005}
+.slsw[aria-pressed="true"]{border-color:#fff;outline:2px solid #e0a63a}
+.sealrow.inl{grid-template-columns:auto 44px auto 1fr;align-items:center;gap:8px}
+#sl-letter{width:44px;text-align:center;font:700 16px Georgia,serif;color:inherit;background:#00000033;border:1px solid #ffffff24;border-radius:8px;padding:6px 0;text-transform:uppercase}
+#sl-finish{font:inherit;font-size:13px;color:inherit;background:#231c17;border:1px solid #ffffff24;border-radius:8px;padding:6px 8px}
 </style>
 
 <div class="wrap">
@@ -527,6 +564,7 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
   </button>
 </div>
 
+<p class="appfoot"><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/refunds">Refunds</a> · <a href="/contact">Contact</a></p>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="sealpress" id="sealpress" hidden><img id="sealpressimg" alt=""></div>
 
@@ -542,6 +580,19 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
     </div>
     <div class="note" id="plannote">Preview build: checkout isn’t connected yet, so choosing a plan adds the letters here so you can test the flow.</div>
     <div class="row"><button class="btn" id="closeplans">Not now</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="acctmodal" hidden>
+  <div class="modal narrow acct" role="dialog" aria-modal="true" aria-labelledby="acct-h">
+    <div class="acct-head"><div><div class="eyebrow">Your account</div><h3 id="acct-h">Your letters</h3></div><button class="x" id="acctclose" type="button" aria-label="Close">×</button></div>
+    <p class="acct-status" id="acct-status"></p>
+    <p class="muted" id="acct-who"></p>
+    <form id="acct-signinform" class="acct-row"><div id="acct-signin"><label for="acct-email">Sign in with email to keep your letters on every device</label><div class="inrow"><input id="acct-email" type="email" autocomplete="email" placeholder="you@example.com"><button class="btn primary" type="submit">Email me a link</button></div></div><p class="formmsg" id="acct-signinmsg" role="status"></p></form>
+    <div class="acct-row"><label for="acct-link">Private sign-in link</label><div class="inrow"><input id="acct-link" readonly><button class="btn" id="acct-copy" type="button">Copy</button></div><p class="formmsg" id="acct-linkmsg" role="status">Open it on your phone or laptop to carry your letters over. Keep it private.</p></div>
+    <form id="acct-redeemform" class="acct-row"><label for="acct-code">Gift or company code</label><div class="inrow"><input id="acct-code" autocomplete="off" autocapitalize="characters" placeholder="e.g. FRIENDS5"><button class="btn" type="submit">Redeem</button></div><p class="formmsg" id="acct-redeemmsg" role="status"></p></form>
+    <div class="acct-row"><h4>Sent letters</h4><ul class="acct-letters" id="acct-letters"></ul></div>
+    <div class="acct-foot"><button class="linkish" id="acct-signout" type="button">Sign out on this device</button><span><a href="/terms" target="_blank">Terms</a> · <a href="/privacy" target="_blank">Privacy</a> · <a href="/refunds" target="_blank">Refunds</a> · <a href="/contact" target="_blank">Contact</a></span></div>
   </div>
 </div>
 
@@ -903,7 +954,7 @@ async function api(path,body){
   if(!r.ok){ const e=new Error(j.error||("http "+r.status)); e.status=r.status; e.data=j; throw e; }
   return j;
 }
-function applyAccount(a){ if(!a) return; if(a.token){ S.token=a.token; store.set("q.token",a.token); } if(typeof a.credits==="number") S.credits=a.credits; S.plan=a.season?"season":"free"; renderCredits(); }
+function applyAccount(a){ if(!a) return; if(a.token){ S.token=a.token; store.set("q.token",a.token); } if(typeof a.credits==="number") S.credits=a.credits; S.plan=a.season?"season":"free"; if(a.email){ S.email=a.email; store.set("q.email",a.email); if(typeof acctLabel==="function") acctLabel(); } renderCredits(); }
 const paper = ()=> PAPERS.find(p=>p.id===S.paper) || PAPERS[0];
 const MAX_PHOTOS=4, MAX_ITEMS=24;
 
@@ -1652,6 +1703,254 @@ setInterval(()=>{
   askWorker("live").then(r=>{ if(r&&now-lastQuip>=6000) say(r.line,r.mood); });
 },3000);
 
+/*SEALGEN-START*/
+/* Realistic wax seals, drawn as SVG from a few choices. Shared by the app and the recipient's envelope page. */
+const WAX={
+  crimson:{n:"Crimson",b:"#a3161e",d:"#560a0e",h:"#e4675e"},
+  burgundy:{n:"Burgundy",b:"#6d1424",d:"#33060e",h:"#b04454"},
+  rose:{n:"Rose",b:"#c43a6c",d:"#741838",h:"#f394b8"},
+  blush:{n:"Blush",b:"#e3a0b0",d:"#a8667a",h:"#fde0e7"},
+  terracotta:{n:"Terracotta",b:"#b8532f",d:"#682611",h:"#ec9a74"},
+  ochre:{n:"Ochre",b:"#c48a2a",d:"#734c0d",h:"#f4cd78"},
+  sage:{n:"Sage",b:"#7f9a78",d:"#435b3c",h:"#c2d6bb"},
+  emerald:{n:"Emerald",b:"#1f6b4a",d:"#0b3524",h:"#62b48e"},
+  navy:{n:"Navy",b:"#22325f",d:"#0b132d",h:"#6a80bb"},
+  lilac:{n:"Lilac",b:"#9b86c4",d:"#594684",h:"#dacdf2"},
+  onyx:{n:"Onyx",b:"#28252b",d:"#060507",h:"#77727c"},
+  ivory:{n:"Ivory",b:"#e6dbc2",d:"#9f8e6f",h:"#fffaf0"},
+  gold:{n:"Gold leaf",b:"#c99a3a",d:"#694709",h:"#fff2b8",metal:1},
+  silver:{n:"Silver",b:"#b7bdc6",d:"#565c66",h:"#ffffff",metal:1},
+  copper:{n:"Copper",b:"#b8683a",d:"#5a2a10",h:"#ffc8a2",metal:1},
+  pearl:{n:"Pearl",b:"#ece5dc",d:"#a99b8d",h:"#ffffff",pearl:1},
+};
+const SEAL_SHAPES={classic:"Classic pour",drip:"Dripping",heart:"Heart",oval:"Oval",octagon:"Octagon",scallop:"Scalloped",square:"Square",rope:"Rope edge"};
+const SEAL_FINISHES={wax:"Wax",metallic:"Metallic",pearl:"Pearlescent",marble:"Marbled",antique:"Antique"};
+const SEAL_EMBLEMS={initial:"Your initial",heart:"Heart",rose:"Rose",crown:"Crown",star:"Star",moon:"Moon",bee:"Bee",laurel:"Laurel",infinity:"Infinity",quill:"Quill",twohearts:"Two hearts",q:"Quilliam"};
+function sealRng(seed){ let a=seed>>>0||1; return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function sealHash(s){ let h=2166136261; for(const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function smoothPath(pts){ // closed Catmull-Rom through points
+  const n=pts.length; let d=`M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for(let i=0;i<n;i++){ const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    d+=`C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)} ${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)} ${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
+  return d+"Z";
+}
+function sealOutline(shape,R){
+  const out=[], N=72, ph=[R()*6.28,R()*6.28,R()*6.28,R()*6.28], am=[.035+R()*.02,.022+R()*.015,.012,.008];
+  const wob=(a)=>1+am[0]*Math.sin(a*2+ph[0])+am[1]*Math.sin(a*5+ph[1])+am[2]*Math.sin(a*9+ph[2])+am[3]*Math.sin(a*14+ph[3]);
+  if(shape==="heart"){ for(let i=0;i<N;i++){ const t=i/N*Math.PI*2, x=16*Math.pow(Math.sin(t),3), y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)); const w=1+.02*(R()-.5); out.push([100+x*4.9*w,104+y*4.9*w]); } return out; }
+  if(shape==="octagon"){ for(let i=0;i<8;i++){ const a=i/8*Math.PI*2+Math.PI/8, r=84*(1+.02*(R()-.5)); const a2=a+Math.PI/8;
+      out.push([100+Math.cos(a)*r,100+Math.sin(a)*r]); out.push([100+Math.cos(a2)*r*.94,100+Math.sin(a2)*r*.94]); } return out; }
+  if(shape==="square"){ const s=72; for(let i=0;i<N;i++){ const a=i/N*Math.PI*2, c=Math.cos(a), sn=Math.sin(a), k=1/Math.pow(Math.pow(Math.abs(c),4)+Math.pow(Math.abs(sn),4),.25); out.push([100+c*s*1.08*k*wob(a),100+sn*s*1.08*k*wob(a)]); } return out; }
+  if(shape==="scallop"){ for(let i=0;i<N;i++){ const a=i/N*Math.PI*2, r=80+7*Math.cos(a*12)+2*(R()-.5); out.push([100+Math.cos(a)*r,100+Math.sin(a)*r]); } return out; }
+  const rx=shape==="oval"?70:84, ry=shape==="oval"?88:84;
+  for(let i=0;i<N;i++){ const a=i/N*Math.PI*2, w=shape==="rope"?1+.01*(R()-.5):wob(a); out.push([100+Math.cos(a)*rx*w,100+Math.sin(a)*ry*w]); }
+  return out;
+}
+function sealInner(shape){
+  if(shape==="heart") return `<path d="M100 146C62 122 50 98 60 82s30-18 40 0c10-18 30-18 40 0s-2 40-40 64z"/>`;
+  if(shape==="octagon") return `<polygon points="${Array.from({length:8},(_,i)=>{const a=i/8*Math.PI*2+Math.PI/8; return `${(100+Math.cos(a)*60).toFixed(1)},${(100+Math.sin(a)*60).toFixed(1)}`;}).join(" ")}"/>`;
+  if(shape==="square") return `<rect x="48" y="48" width="104" height="104" rx="18"/>`;
+  if(shape==="oval") return `<ellipse cx="100" cy="100" rx="48" ry="64"/>`;
+  return `<circle cx="100" cy="100" r="58"/>`;
+}
+function sealEmblem(kind,fill,letter){
+  const f=`fill="${fill}"`;
+  switch(kind){
+    case "initial": { const L=(letter||"A").slice(0,1).toUpperCase().replace(/[<>&"]/g,""); return `<text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="700" font-size="76" ${f}>${L}</text>`; }
+    case "heart": return `<path ${f} d="M100 132C66 110 58 90 66 78c8-12 26-12 34 4 8-16 26-16 34-4s0 32-34 54z"/>`;
+    case "twohearts": return `<path ${f} d="M86 128C60 110 54 94 60 84s20-10 26 2c6-12 20-12 26-2s0 26-26 44z"/><path ${f} d="M118 120C96 104 92 90 97 82s17-8 21 2c5-10 17-10 22-2s-1 22-22 38z" opacity=".85"/>`;
+    case "crown": return `<g ${f}><path d="M64 118l5-40 18 20 13-26 13 26 18-20 5 40z"/><rect x="64" y="121" width="72" height="9" rx="2"/><circle cx="69" cy="76" r="4.5"/><circle cx="100" cy="68" r="5"/><circle cx="131" cy="76" r="4.5"/></g>`;
+    case "star": { let p=""; for(let i=0;i<10;i++){ const r=i%2?16:38, a=-Math.PI/2+i*Math.PI/5; p+=`${(100+Math.cos(a)*r).toFixed(1)},${(102+Math.sin(a)*r).toFixed(1)} `; } return `<polygon ${f} points="${p}"/>`; }
+    case "moon": return `<g ${f}><path d="M114 64a38 38 0 1 0 0 72a30 30 0 1 1 0-72z"/><path d="M128 84l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></g>`;
+    case "rose": { let s=""; for(let i=0;i<6;i++){ s+=`<ellipse cx="100" cy="82" rx="12" ry="20" transform="rotate(${i*60} 100 100)"/>`; } return `<g ${f}>${s}<circle cx="100" cy="100" r="11"/></g><path d="M100 94c6 0 9 4 7 9s-9 6-12 2" fill="none" stroke="${fill}" stroke-width="2.4" opacity=".6"/>`; }
+    case "bee": return `<g ${f}><ellipse cx="78" cy="84" rx="16" ry="11" transform="rotate(-30 78 84)" opacity=".85"/><ellipse cx="122" cy="84" rx="16" ry="11" transform="rotate(30 122 84)" opacity=".85"/><ellipse cx="100" cy="106" rx="15" ry="24"/><circle cx="100" cy="78" r="9"/></g><path d="M86 100h28M86 112h28" stroke="${fill}" stroke-width="0" />`;
+    case "laurel": { let s=""; for(let i=0;i<7;i++){ const t=i/6, a=Math.PI*(.62+t*.72); const x=100+Math.cos(a)*40, y=100+Math.sin(a)*40; s+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="11" transform="rotate(${(a*180/Math.PI+30).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`; const x2=200-x; s+=`<ellipse cx="${x2.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="11" transform="rotate(${(-(a*180/Math.PI)-30).toFixed(0)} ${x2.toFixed(1)} ${y.toFixed(1)})"/>`; }
+      return `<g ${f}>${s}</g><text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="40" ${f}>${(letter||"").slice(0,1).toUpperCase().replace(/[<>&"]/g,"")}</text>`; }
+    case "infinity": return `<path d="M64 100c0-14 12-22 22-22 16 0 24 22 28 22s12-22 28-22c10 0 22 8 22 22s-12 22-22 22c-16 0-24-22-28-22s-12 22-28 22c-10 0-22-8-22-22z" fill="none" stroke="${fill}" stroke-width="9" transform="translate(-14 0) scale(1.14 1) translate(0 0)"/>`;
+    case "quill": return `<g ${f}><path d="M132 60c-30 6-52 30-60 66l6 2c4-10 8-18 14-24 8 0 18-4 24-12-6 0-12 0-16-2 10-2 20-8 24-16-6 2-12 2-16 0 10-4 18-10 24-14z"/><path d="M70 136l8-12" stroke="${fill}" stroke-width="4" stroke-linecap="round"/></g>`;
+    default: return `<text x="100" y="102" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="74" ${f}>Q</text>`;
+  }
+}
+function waxSeal(o){
+  o=o||{}; const shape=SEAL_SHAPES[o.shape]?o.shape:"classic", wax=WAX[o.color]||WAX.crimson, finish=SEAL_FINISHES[o.finish]?o.finish:(wax.metal?"metallic":wax.pearl?"pearl":"wax"), emblem=SEAL_EMBLEMS[o.emblem]?o.emblem:"heart";
+  const seed=sealHash([shape,o.color,emblem,finish,o.letter||""].join("|")), R=sealRng(seed), id="s"+seed.toString(36);
+  const outline=smoothPath(sealOutline(shape,R));
+  let drips="";
+  if(shape==="drip"){ [-38,-6,30].forEach((dx0,k)=>{ const dx=dx0+(R()-.5)*10, x=100+dx, y=100+Math.sqrt(Math.max(0,80*80-dx*dx))-6, L=14+R()*20, w=6+R()*4;
+      drips+=`<path d="M${(x-w-3).toFixed(1)} ${(y-4).toFixed(1)}C${(x-w).toFixed(1)} ${(y+L*.55).toFixed(1)} ${(x-w).toFixed(1)} ${(y+L).toFixed(1)} ${x.toFixed(1)} ${(y+L).toFixed(1)}C${(x+w).toFixed(1)} ${(y+L).toFixed(1)} ${(x+w).toFixed(1)} ${(y+L*.55).toFixed(1)} ${(x+w+3).toFixed(1)} ${(y-4).toFixed(1)}Z"/>`; }); }
+  const b=wax.b, d=wax.d, h=wax.h, metal=finish==="metallic", pearl=finish==="pearl";
+  const bodyGrad=metal
+    ? `<linearGradient id="${id}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${h}"/><stop offset=".22" stop-color="${b}"/><stop offset=".45" stop-color="${d}"/><stop offset=".6" stop-color="${b}"/><stop offset=".78" stop-color="${h}"/><stop offset="1" stop-color="${d}"/></linearGradient>`
+    : `<radialGradient id="${id}b" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="${h}"/><stop offset=".38" stop-color="${b}"/><stop offset="1" stop-color="${d}"/></radialGradient>`;
+  const faceGrad=`<radialGradient id="${id}f" cx=".6" cy=".66" r=".8"><stop offset="0" stop-color="${metal?h:b}"/><stop offset=".7" stop-color="${b}"/><stop offset="1" stop-color="${d}"/></radialGradient>`;
+  const bevel=`<linearGradient id="${id}v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d}"/><stop offset=".5" stop-color="${b}"/><stop offset="1" stop-color="${h}"/></linearGradient>`;
+  const rim=`<linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${h}" stop-opacity=".9"/><stop offset=".55" stop-color="${b}" stop-opacity="0"/><stop offset="1" stop-color="${d}" stop-opacity=".8"/></linearGradient>`;
+  const spec=`<radialGradient id="${id}s" cx=".3" cy=".24" r=".42"><stop offset="0" stop-color="#fff" stop-opacity="${metal?.75:pearl?.7:.45}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+  const tex=`<filter id="${id}t" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="${finish==="antique"?1.3:.95}" numOctaves="2" seed="${seed%997}"/><feColorMatrix values="0 0 0 0 ${finish==="antique"?.25:0}  0 0 0 0 ${finish==="antique"?.2:0}  0 0 0 0 ${finish==="antique"?.15:0}  0 0 0 ${finish==="antique"?.5:.22} 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>`;
+  const marble=finish==="marble"?`<filter id="${id}m" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".018 .05" numOctaves="3" seed="${seed%911}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -14 6.6"/><feComposite in2="SourceGraphic" operator="in"/></filter>`:"";
+  const shadow=`<filter id="${id}d" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".45"/></filter>`;
+  const iri=pearl?`<linearGradient id="${id}i" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd6e7"/><stop offset=".35" stop-color="#d9ecff"/><stop offset=".65" stop-color="#e6ffe0"/><stop offset="1" stop-color="#ffe9c9"/></linearGradient>`:"";
+  const antique=finish==="antique"?`<filter id="${id}a"><feColorMatrix type="saturate" values=".55"/></filter>`:"";
+  const inner=sealInner(shape), ek=shape==="heart"?.78:shape==="oval"?.86:1, em=(fill)=>`<g transform="translate(100 ${shape==="heart"?96:100}) scale(${ek}) translate(-100 -100)">${sealEmblem(emblem,fill,o.letter)}</g>`;
+  const ropeRing=shape==="rope"?`<circle cx="100" cy="100" r="70" fill="none" stroke="${d}" stroke-width="9" stroke-dasharray="5 4" opacity=".7"/><circle cx="100" cy="100" r="70" fill="none" stroke="${h}" stroke-width="3" stroke-dasharray="5 4" stroke-dashoffset="2" opacity=".55"/>`:"";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs>${bodyGrad}${faceGrad}${bevel}${rim}${spec}${tex}${marble}${shadow}${iri}${antique}<clipPath id="${id}c"><path d="${outline}"/>${drips}</clipPath></defs>
+<g${antique?` filter="url(#${id}a)"`:""}>
+<g filter="url(#${id}d)"><path d="${outline}" fill="url(#${id}b)"/><g fill="url(#${id}b)">${drips}</g></g>
+<path d="${outline}" fill="none" stroke="url(#${id}r)" stroke-width="3"/>
+${ropeRing}
+<g fill="url(#${id}f)">${inner}</g>
+<g fill="none" stroke="url(#${id}v)" stroke-width="5">${inner}</g>
+<g fill="none" stroke="${d}" stroke-width="1.2" opacity=".55" transform="translate(100 100) scale(.94) translate(-100 -100)">${inner}</g>
+<g opacity=".9" transform="translate(1.8 2.2)">${em(d)}</g>
+<g opacity=".75" transform="translate(-1.4 -1.4)">${em(h)}</g>
+${em(metal?`url(#${id}f)`:b)}
+<g clip-path="url(#${id}c)">${pearl?`<rect width="200" height="200" fill="url(#${id}i)" opacity=".38"/>`:""}${marble?`<rect width="200" height="200" fill="${h}" filter="url(#${id}m)" opacity=".42"/>`:""}<rect width="200" height="200" fill="#000" filter="url(#${id}t)"/><ellipse cx="70" cy="58" rx="56" ry="40" fill="url(#${id}s)"/></g>
+</g></svg>`;
+}
+/*SEALGEN-END*/
+/* ================= Wax seal designer ================= */
+const SEAL_PRESETS=[
+  {n:"Classic red",o:{shape:"classic",color:"crimson",emblem:"heart",finish:"wax"}},
+  {n:"Gold monogram",o:{shape:"classic",color:"gold",emblem:"initial",finish:"metallic"}},
+  {n:"Pearl heart",o:{shape:"heart",color:"pearl",emblem:"heart",finish:"pearl"}},
+  {n:"Antique rose",o:{shape:"drip",color:"burgundy",emblem:"rose",finish:"antique"}},
+  {n:"Onyx crest",o:{shape:"octagon",color:"onyx",emblem:"laurel",finish:"wax"}},
+  {n:"Blush & bee",o:{shape:"scallop",color:"blush",emblem:"bee",finish:"wax"}},
+  {n:"Midnight moon",o:{shape:"rope",color:"navy",emblem:"moon",finish:"marble"}},
+  {n:"Sage romance",o:{shape:"oval",color:"sage",emblem:"twohearts",finish:"wax"}},
+];
+S.sealOpt=Object.assign({shape:"classic",color:"crimson",emblem:"heart",finish:"wax",letter:""},store.get("q.sealopt",{}));
+function sealOpts(){ const o={...S.sealOpt}; if(!o.letter) o.letter=($("from").value.trim()[0]||"Q"); return o; }
+function saveSeal(){ store.set("q.sealopt",S.sealOpt); renderSeals(); renderSeal(); }
+renderSeal=function(){
+  const o=sealOpts(), w=WAX[o.color]||WAX.crimson;
+  if(S.layout==="corporate" && $("logoseal").checked && S.logo){ logoSeal({c:w.b,d:w.d}).then(u=>{ if(u) $("l-seal").src=u; }); }
+  else $("l-seal").src=svgURI(waxSeal(o));
+  const pv=$("sealpreview"); if(pv) pv.src=svgURI(waxSeal(o));
+};
+renderSeals=function(){
+  const box=$("seals"); box.className="sealdesign"; box.innerHTML="";
+  const o=sealOpts();
+  box.insertAdjacentHTML("beforeend",`<div class="sealtop"><img id="sealpreview" alt="Your wax seal" src="${svgURI(waxSeal(o))}"><div class="sealpresets" id="sl-presets" role="group" aria-label="Seal presets"></div></div>
+    <div class="sealrow"><span>Shape</span><div class="sealopts" id="sl-shape" role="group" aria-label="Seal shape"></div></div>
+    <div class="sealrow"><span>Wax</span><div class="sealswatches" id="sl-color" role="group" aria-label="Wax color"></div></div>
+    <div class="sealrow"><span>Emblem</span><div class="sealopts" id="sl-emblem" role="group" aria-label="Seal emblem"></div></div>
+    <div class="sealrow inl"><label for="sl-letter">Initial</label><input id="sl-letter" maxlength="1" value="${(S.sealOpt.letter||"").replace(/"/g,"")}" placeholder="${o.letter}"><span>Finish</span><select id="sl-finish">${Object.entries(SEAL_FINISHES).map(([k,v])=>`<option value="${k}"${k===(o.finish||"wax")?" selected":""}>${v}</option>`).join("")}</select></div>`);
+  SEAL_PRESETS.forEach(p=>{ const b=document.createElement("button"); b.type="button"; b.className="slpre"; b.title=p.n; b.setAttribute("aria-label",p.n+" seal");
+    b.innerHTML=`<img alt="" src="${svgURI(waxSeal({...p.o,letter:o.letter}))}">`; b.onclick=()=>{ S.sealOpt={...p.o,letter:S.sealOpt.letter}; saveSeal(); react(`${p.n}. ${pick(["Very distinguished.","Exquisite choice.","They’ll want to keep the envelope."])}`,"praise"); }; $("sl-presets").append(b); });
+  Object.entries(SEAL_SHAPES).forEach(([k,v])=>{ const b=document.createElement("button"); b.type="button"; b.className="slopt"; b.setAttribute("aria-pressed",String(o.shape===k)); b.title=v; b.setAttribute("aria-label",v);
+    b.innerHTML=`<img alt="" src="${svgURI(waxSeal({...o,shape:k}))}">`; b.onclick=()=>{ S.sealOpt.shape=k; saveSeal(); }; $("sl-shape").append(b); });
+  Object.entries(WAX).forEach(([k,w])=>{ const b=document.createElement("button"); b.type="button"; b.className="slsw"; b.title=w.n; b.setAttribute("aria-label",w.n+" wax"); b.setAttribute("aria-pressed",String(o.color===k));
+    b.style.background=w.metal?`linear-gradient(135deg,${w.h},${w.b} 40%,${w.d} 60%,${w.h})`:w.pearl?`linear-gradient(135deg,#ffd6e7,${w.b},#d9ecff)`:`radial-gradient(circle at 35% 30%,${w.h},${w.b} 45%,${w.d})`;
+    b.onclick=()=>{ S.sealOpt.color=k; if(w.metal) S.sealOpt.finish="metallic"; else if(w.pearl) S.sealOpt.finish="pearl"; else if(S.sealOpt.finish==="metallic"||S.sealOpt.finish==="pearl") S.sealOpt.finish="wax"; saveSeal(); }; $("sl-color").append(b); });
+  Object.entries(SEAL_EMBLEMS).forEach(([k,v])=>{ const b=document.createElement("button"); b.type="button"; b.className="slopt"; b.setAttribute("aria-pressed",String(o.emblem===k)); b.title=v; b.setAttribute("aria-label",v);
+    b.innerHTML=`<img alt="" src="${svgURI(waxSeal({...o,emblem:k,shape:"classic"}))}">`; b.onclick=()=>{ S.sealOpt.emblem=k; saveSeal(); if(k==="initial"&&!S.sealOpt.letter) $("sl-letter").focus(); }; $("sl-emblem").append(b); });
+  $("sl-letter").oninput=e=>{ S.sealOpt.letter=e.target.value.replace(/[^A-Za-z]/g,"").toUpperCase(); e.target.value=S.sealOpt.letter; if(S.sealOpt.letter) S.sealOpt.emblem=S.sealOpt.emblem==="laurel"?"laurel":"initial"; store.set("q.sealopt",S.sealOpt); renderSeal(); clearTimeout(S._slt); S._slt=setTimeout(renderSeals,500); };
+  $("sl-finish").onchange=e=>{ S.sealOpt.finish=e.target.value; saveSeal(); };
+};
+const _deliveryMeta=deliveryMeta;
+deliveryMeta=function(){ const m=_deliveryMeta(), o=sealOpts(), w=WAX[o.color]||WAX.crimson; return {...m,seal_c:w.b,seal_d:w.d,seal_g:"",seal_o:o}; };
+
+/* ================= Luxe papers ================= */
+const svgBg=(svg)=>`url('data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g,"%27")}')`;
+const GRAIN=(op,f=.85,tint=".35 .28 .2")=>{ const [r,g,b]=tint.split(" "); return svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='${f}' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 ${r}  0 0 0 0 ${g}  0 0 0 0 ${b}  0 0 0 ${op} 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`); };
+const LINEN=svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='a'><feTurbulence type='fractalNoise' baseFrequency='0.9 0.012' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4  0 0 0 0 .34  0 0 0 0 .24  0 0 0 .16 0'/></filter><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4  0 0 0 0 .34  0 0 0 0 .24  0 0 0 .13 0'/></filter><rect width='100%' height='100%' filter='url(#a)'/><rect width='100%' height='100%' filter='url(#b)'/></svg>`);
+const FLECKS=svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .9  0 0 0 0 .5  0 0 0 0 .62  0 0 0 44 -31'/></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`);
+const MARBLE=svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='600' height='120' viewBox='0 0 600 120' preserveAspectRatio='none'><filter id='m' x='-10%' y='-10%' width='120%' height='120%'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.04' numOctaves='3' seed='11' result='t'/><feDisplacementMap in='SourceGraphic' in2='t' scale='60' xChannelSelector='R' yChannelSelector='G'/></filter><g filter='url(#m)'><rect y='0' width='600' height='10' fill='#1f2f5c'/><rect y='10' width='600' height='10' fill='#c9a14a'/><rect y='20' width='600' height='10' fill='#efe6d2'/><rect y='30' width='600' height='10' fill='#8a2a2a'/><rect y='40' width='600' height='10' fill='#2f5d6e'/><rect y='50' width='600' height='10' fill='#efe6d2'/><rect y='60' width='600' height='10' fill='#1f2f5c'/><rect y='70' width='600' height='10' fill='#d98c5f'/><rect y='80' width='600' height='10' fill='#efe6d2'/><rect y='90' width='600' height='10' fill='#1f2f5c'/><rect y='100' width='600' height='10' fill='#c9a14a'/><rect y='110' width='600' height='10' fill='#8a2a2a'/><rect y='120' width='600' height='10' fill='#2f5d6e'/><rect y='130' width='600' height='10' fill='#efe6d2'/></g><rect y='115' width='600' height='5' fill='#c9a14a'/></svg>`);
+const BOTANICAL=svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><g fill='none' stroke='#6b5a3a' stroke-width='1.1' stroke-linecap='round' opacity='.75'><path d='M6 134C30 96 60 64 120 10'/><path d='M30 98c-12-2-18-10-18-18 10 0 18 6 18 18zM44 82c-12-4-16-12-15-20 10 2 16 9 15 20zM58 66c-11-5-14-13-12-21 9 3 14 11 12 21zM72 52c-10-6-12-14-9-22 8 4 12 12 9 22zM86 38c-9-6-10-14-6-21 7 5 9 13 6 21z'/><path d='M36 92c4 12 14 16 22 15-1-10-9-16-22-15zM50 76c5 11 14 15 22 13-2-9-10-15-22-13zM64 60c5 10 14 13 21 11-2-9-10-13-21-11zM78 46c5 9 13 12 20 9-3-8-10-12-20-9z'/></g></svg>`);
+const GOLDH="linear-gradient(90deg,#9c7424,#f3dc8a 22%,#b48a2e 46%,#f7e7a6 70%,#9c7424)", GOLDV="linear-gradient(180deg,#9c7424,#f3dc8a 22%,#b48a2e 46%,#f7e7a6 70%,#9c7424)";
+const SILVH="linear-gradient(90deg,#8d939c,#f2f4f7 25%,#a7adb6 50%,#ffffff 72%,#8d939c)", SILVV="linear-gradient(180deg,#8d939c,#f2f4f7 25%,#a7adb6 50%,#ffffff 72%,#8d939c)";
+const FRAME=(H,V,o=16,t=3)=>`${H} ${o}px ${o}px/calc(100% - ${o*2}px) ${t}px no-repeat,${H} ${o}px calc(100% - ${o+t}px)/calc(100% - ${o*2}px) ${t}px no-repeat,${V} ${o}px ${o}px/${t}px calc(100% - ${o*2}px) no-repeat,${V} calc(100% - ${o+t}px) ${o}px/${t}px calc(100% - ${o*2}px) no-repeat,${H} ${o+8}px ${o+8}px/calc(100% - ${o*2+16}px) 1px no-repeat,${H} ${o+8}px calc(100% - ${o+9}px)/calc(100% - ${o*2+16}px) 1px no-repeat,${V} ${o+8}px ${o+8}px/1px calc(100% - ${o*2+16}px) no-repeat,${V} calc(100% - ${o+9}px) ${o+8}px/1px calc(100% - ${o*2+16}px) no-repeat`;
+const VIGNETTE=(c)=>`radial-gradient(130% 110% at 50% 45%,transparent 62%,${c} 100%)`;
+PAPER_GROUPS.splice(2,0,["luxe","Luxe"]);
+PAPERS.push(
+  {id:"cotton",group:"luxe",name:"Cotton Rag",sub:"Heavyweight",meta:"300 GSM",isNew:true,bg:`${GRAIN(.11)},${VIGNETTE("#d9cbb0aa")},#f8f3ea`,deco:"none",ink:"#2b2a33",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Pinyon Script',cursive",greet:"Dear {to},",close:"With warmth,"},
+  {id:"goldfoil",group:"luxe",name:"Gold Foil",sub:"Foil-pressed frame",meta:"GILDED",isNew:true,bg:`${GRAIN(.08)},#fbf6ea`,deco:FRAME(GOLDH,GOLDV),ink:"#3a2c12",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Pinyon Script',cursive",greet:"My dearest {to},",close:"With love and gold,"},
+  {id:"blacktie",group:"luxe",name:"Black Tie",sub:"Matte & gold",meta:"EVENING",isNew:true,bg:`${GRAIN(.18,.9,".9 .85 .7")},radial-gradient(120% 100% at 30% 0,#232126,#0f0e11)`,deco:FRAME(GOLDH,GOLDV),ink:"#ead39b",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Playfair Display',Georgia,serif",greet:"My dear {to},",close:"Yours, in black tie,"},
+  {id:"marbled",group:"luxe",name:"Marbled Endpaper",sub:"Bookbinder’s",meta:"1890",isNew:true,bg:`${GRAIN(.09)},#f6f0e3`,deco:`${MARBLE} top/100% 11% no-repeat`,ink:"#1f2f5c",font:"'IM Fell English',Georgia,serif",gfont:"'IM Fell English',Georgia,serif",greet:"Dear {to},",close:"Ever yours,"},
+  {id:"linenivory",group:"luxe",name:"Linen Ivory",sub:"Woven texture",meta:"LINEN",isNew:true,bg:`${LINEN},#f3eee2`,deco:"none",ink:"#3b2416",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Playfair Display',Georgia,serif",greet:"Dear {to},",close:"Warmly,"},
+  {id:"handmade",group:"luxe",name:"Handmade Petal",sub:"Pressed petals",meta:"HANDMADE",isNew:true,bg:`${FLECKS},${GRAIN(.13,.7)},#f6efe6`,deco:"none",ink:"#6a2c3a",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Pinyon Script',cursive",greet:"Sweet {to},",close:"Pressed with love,"},
+  {id:"botanical",group:"luxe",name:"Botanical Engraving",sub:"Fine-line leaves",meta:"HERBARIUM",isNew:true,bg:`${GRAIN(.09)},#f7f2e6`,deco:`${BOTANICAL} left 1% bottom 11%/19% auto no-repeat`,ink:"#3f3a25",font:"'IM Fell English',Georgia,serif",gfont:"'IM Fell English',Georgia,serif",greet:"Dear {to},",close:"From my garden to yours,"},
+  {id:"navyfoil",group:"luxe",name:"Navy & Silver",sub:"Silver foil",meta:"MIDNIGHT",isNew:true,bg:`${GRAIN(.16,.9,".8 .85 1")},radial-gradient(120% 100% at 30% 0,#22305a,#121a35)`,deco:FRAME(SILVH,SILVV),ink:"#e8eaf2",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Playfair Display',Georgia,serif",greet:"Dearest {to},",close:"Under the stars, always,"},
+  {id:"vellum",group:"luxe",name:"Vellum Blush",sub:"Layered vellum",meta:"SOFT",isNew:true,bg:`${GRAIN(.07)},linear-gradient(#ffffff80,#ffffff80) center/90% 93% no-repeat,#f6e4e8`,deco:"none",ink:"#7a2c4a",font:"'Cormorant Garamond',Georgia,serif",gfont:"'Pinyon Script',cursive",greet:"Darling {to},",close:"Softly yours,"},
+);
+
+/* ================= Vintage & Luxe stickers ================= */
+const gold=(id)=>`<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a6418"/><stop offset=".25" stop-color="#f6e08f"/><stop offset=".5" stop-color="#b48a2e"/><stop offset=".72" stop-color="#fff2bf"/><stop offset="1" stop-color="#8a6418"/></linearGradient></defs>`;
+const stamp=(art,val,bg,ink)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 68"><defs><mask id="p"><rect width="56" height="68" fill="#fff"/>${Array.from({length:10},(_,i)=>`<circle cx="${3+i*5.6}" cy="1.5" r="2.1" fill="#000"/><circle cx="${3+i*5.6}" cy="66.5" r="2.1" fill="#000"/>`).join("")}${Array.from({length:12},(_,i)=>`<circle cx="1.5" cy="${3+i*5.6}" r="2.1" fill="#000"/><circle cx="54.5" cy="${3+i*5.6}" r="2.1" fill="#000"/>`).join("")}</mask></defs><g mask="url(#p)"><rect width="56" height="68" fill="#fffaf0"/></g><rect x="5" y="5" width="46" height="58" fill="${bg}"/><g transform="translate(5 5)">${art}</g><text x="47" y="58" text-anchor="end" font-family="Georgia,serif" font-weight="700" font-size="9" fill="${ink}">${val}</text><rect x="5" y="5" width="46" height="58" fill="none" stroke="${ink}" stroke-width=".8" opacity=".5"/></svg>`;
+const washi=(bg,pat)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40"><defs><pattern id="w" width="10" height="10" patternUnits="userSpaceOnUse">${pat}</pattern></defs><path d="M3 6l4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2v28l-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3z" fill="${bg}" opacity=".88"/><path d="M3 6l4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2 4-3 4 2 4-2 4 3 4-2 4 2v28l-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3-4-2-4 2-4-3-4 2-4-2-4 3z" fill="url(#w)" opacity=".85"/></svg>`;
+STICKER_SETS.splice(1,0,["luxe","Luxe",[
+  ["goldheart",`${gold("g")}<path d="M32 56C10 42 6 28 14 19s17-3 18 6c1-9 10-15 18-6s4 23-18 37z" fill="url(#g)"/><path d="M18 24c-3 3-3 8 0 11" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/>`],
+  ["goldstar",`${gold("g")}<path d="M32 4l7.6 17.6L58 24l-14 12.6L48 56 32 46 16 56l4-19.4L6 24l18.4-2.4z" fill="url(#g)"/>`],
+  ["goldcorner",`${gold("g")}<g fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round"><path d="M6 58V6h52"/><path d="M12 52V12h40" stroke-width="1.2"/><path d="M6 6c10 2 16 8 18 18M6 6c2 10 8 16 18 18"/><circle cx="24" cy="24" r="3" fill="url(#g)"/><path d="M30 6c4 4 4 8 0 12M6 30c4 4 8 4 12 0"/></g>`],
+  ["satinbow",`<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7c4d4"/><stop offset=".5" stop-color="#e57399"/><stop offset="1" stop-color="#b8325e"/></linearGradient></defs><path d="M32 30C20 12 6 14 8 28s16 12 24 2zM32 30c12-18 26-16 24-2s-16 12-24 2z" fill="url(#s)"/><path d="M29 32l-10 26 7-3 4 6 3-27zM35 32l10 26-7-3-4 6-3-27z" fill="url(#s)"/><ellipse cx="32" cy="31" rx="5" ry="6" fill="#b8325e"/><path d="M14 22c4-2 8-1 11 3M50 22c-4-2-8-1-11 3" stroke="#fff" stroke-width="1.4" fill="none" opacity=".6"/>`],
+  ["withlove",`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 52">${gold("g")}<text x="75" y="36" text-anchor="middle" font-family="'Brush Script MT','Segoe Script',cursive" font-style="italic" font-weight="700" font-size="34" fill="url(#g)" stroke="#8a6418" stroke-width=".4">with love</text></svg>`],
+  ["lace",`<circle cx="32" cy="32" r="29" fill="#fffdf8" stroke="#e8e0d0"/>${Array.from({length:16},(_,i)=>{const a=i/16*Math.PI*2; return `<circle cx="${(32+Math.cos(a)*25).toFixed(1)}" cy="${(32+Math.sin(a)*25).toFixed(1)}" r="3.2" fill="#efe6d6"/>`;}).join("")}${Array.from({length:10},(_,i)=>{const a=i/10*Math.PI*2; return `<ellipse cx="${(32+Math.cos(a)*16).toFixed(1)}" cy="${(32+Math.sin(a)*16).toFixed(1)}" rx="2.4" ry="4.4" fill="#efe6d6" transform="rotate(${(a*180/Math.PI+90).toFixed(0)} ${(32+Math.cos(a)*16).toFixed(1)} ${(32+Math.sin(a)*16).toFixed(1)})"/>`;}).join("")}<circle cx="32" cy="32" r="7" fill="none" stroke="#efe6d6" stroke-width="2"/>`],
+  ["goldflecks",`${gold("g")}${[[14,18,6],[30,10,4],[44,22,7],[22,38,5],[40,44,6],[52,36,3],[12,50,3]].map(([x,y,r],i)=>`<path d="M${x} ${y-r}l${r*.4} ${r*.7} ${r*.6} ${r*.3}-${r*.6} ${r*.4}-${r*.4} ${r*.6}-${r*.4}-${r*.6}-${r*.6}-${r*.4} ${r*.6}-${r*.3}z" fill="url(#g)" transform="rotate(${i*23} ${x} ${y})"/>`).join("")}`],
+  ["pearldrop",`<defs><radialGradient id="p" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#efe8de"/><stop offset="1" stop-color="#c9bba8"/></radialGradient></defs><path d="M32 6v14" stroke="#c9a14a" stroke-width="2"/><circle cx="32" cy="38" r="18" fill="url(#p)"/><circle cx="26" cy="31" r="4" fill="#fff" opacity=".8"/>`],
+]],["vintage","Vintage",[
+  ["stamprose",stamp(`<path d="M23 44v10" stroke="#3f6b3a" stroke-width="2"/><path d="M23 50c-6-2-9-6-9-10 5 0 9 4 9 10z" fill="#5d8a52"/><circle cx="23" cy="26" r="12" fill="#c43a5a"/><path d="M23 18c6 0 9 5 7 9s-8 5-11 1c4 0 6-2 5-5" fill="none" stroke="#8a1f38" stroke-width="1.6"/>`,"5¢","#f3e6cf","#7a1f24")],
+  ["stampplane",stamp(`<rect width="46" height="58" fill="#cfe2f0"/><path d="M6 36l30-14c3-1 4 1 2 3L28 32l-2 14-4 1-1-11-6 3-1 5-3 1-1-7z" fill="#1f3a6e"/><circle cx="36" cy="12" r="6" fill="#fff6d6"/>`,"AIR","#cfe2f0","#1f3a6e")],
+  ["stampbird",stamp(`<rect width="46" height="58" fill="#efe1c4"/><path d="M8 40c10 0 16-6 20-14 3-6 8-8 12-6-2 1-3 3-3 5 4 2 4 6 2 8-6 6-16 10-31 7z" fill="#b8532f"/><circle cx="35" cy="22" r="1.2" fill="#1d1a1c"/><path d="M28 34l-6 10M24 32l-8 9" stroke="#6e2a13" stroke-width="1.4"/>`,"8¢","#efe1c4","#6e2a13")],
+  ["postmark",`<g fill="none" stroke="#2c2a33" stroke-width="2" opacity=".72"><circle cx="24" cy="32" r="20"/><circle cx="24" cy="32" r="14" stroke-width="1"/><path d="M46 22c4-3 8 3 12 0M46 28c4-3 8 3 12 0M46 34c4-3 8 3 12 0M46 40c4-3 8 3 12 0"/></g><text x="24" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="5.6" fill="#2c2a33" opacity=".75">NEW YORK</text><text x="24" y="38" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="5" fill="#2c2a33" opacity=".75">${new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}).toUpperCase()}</text>`],
+  ["washipink",washi("#f5c6d3",`<path d="M0 0h10v10H0z" fill="none" stroke="#fff" stroke-width="1"/>`)],
+  ["washifloral",washi("#cfe3d6",`<circle cx="5" cy="5" r="2" fill="#f29bb8"/><circle cx="5" cy="5" r=".8" fill="#f4c542"/>`)],
+  ["washikraft",washi("#c9a77a",`<path d="M0 10L10 0" stroke="#b08a5a" stroke-width="1"/>`)],
+  ["washigold",washi("#f1e3b8",`<path d="M0 3h10" stroke="#c9a14a" stroke-width="2"/>`)],
+  ["lavender",`<path d="M32 60C30 40 31 24 34 6" stroke="#6e8a5a" stroke-width="1.6" fill="none"/>${Array.from({length:9},(_,i)=>`<ellipse cx="${(33+(i%2?3:-3)).toFixed(0)}" cy="${(8+i*4.2).toFixed(1)}" rx="2.6" ry="3.6" fill="${i%3?"#9b86c4":"#7d68aa"}" opacity=".9"/>`).join("")}<path d="M31 44c-6-2-10-6-10-10 5 1 9 5 10 10zM33 50c6-2 9-6 9-10-5 1-8 5-9 10z" fill="#8fa77f" opacity=".85"/>`],
+  ["fern",`<path d="M10 58C24 40 36 24 54 6" stroke="#5d7a4f" stroke-width="1.6" fill="none"/>${Array.from({length:9},(_,i)=>{const t=i/9, x=10+t*44, y=58-t*52; return `<ellipse cx="${(x-4).toFixed(1)}" cy="${(y-3).toFixed(1)}" rx="5.5" ry="2.2" fill="#7d9a6f" transform="rotate(${-60} ${(x-4).toFixed(1)} ${(y-3).toFixed(1)})" opacity=".85"/><ellipse cx="${(x+4).toFixed(1)}" cy="${(y+2).toFixed(1)}" rx="5.5" ry="2.2" fill="#6a8a5c" transform="rotate(${10} ${(x+4).toFixed(1)} ${(y+2).toFixed(1)})" opacity=".85"/>`;}).join("")}`],
+  ["ticket",`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 52"><path d="M4 6h112v12a6 6 0 0 0 0 16v12H4V34a6 6 0 0 0 0-16z" fill="#f1c9a5"/><path d="M84 8v36" stroke="#b07a4a" stroke-dasharray="3 3"/><text x="44" y="24" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="11" fill="#7a3b1a">ADMIT ONE</text><text x="44" y="38" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="9" fill="#7a3b1a">to my heart</text><text x="100" y="31" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="10" fill="#7a3b1a" transform="rotate(-90 100 28)">No. 001</text></svg>`],
+  ["paperclip",`<defs><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8d939c"/><stop offset=".4" stop-color="#f2f4f7"/><stop offset=".7" stop-color="#a7adb6"/><stop offset="1" stop-color="#6b717a"/></linearGradient></defs><path d="M24 50V16a8 8 0 0 1 16 0v34a12 12 0 0 1-24 0V22" fill="none" stroke="url(#m)" stroke-width="3.2" stroke-linecap="round"/>`],
+  ["kraftag",`<path d="M14 18l12-12h26v52H26L14 46z" fill="#c9a77a"/><circle cx="22" cy="32" r="3" fill="#fffaf0" stroke="#8a6a3a"/><path d="M22 32C12 30 6 22 4 12" stroke="#8a5a2f" stroke-width="1.2" fill="none"/><text x="38" y="36" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="8" fill="#5a3a1a" transform="rotate(-90 38 32)">for you</text>`],
+]]);
+
+/* ================= Account: sign-in, my letters, codes ================= */
+{
+  const hdr=document.querySelector(".hdr-right");
+  if(hdr){ const b=document.createElement("button"); b.className="acctbtn"; b.id="acctbtn"; b.type="button"; b.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7" fill="currentColor"/></svg><span id="acctlabel">Account</span>`; hdr.append(b); }
+}
+S.email=store.get("q.email","");
+function acctLabel(){ const l=$("acctlabel"); if(l) l.textContent=S.email?S.email.split("@")[0]:"Sign in"; }
+function openAccount(){ $("acctmodal").hidden=false; renderAccount(); }
+async function renderAccount(){
+  const hosted=API!==null;
+  $("acct-status").innerHTML=S.plan==="season"?"Season Pass · <b>unlimited letters</b> until Jan 1":`<b>${S.credits}</b> letter${S.credits===1?"":"s"} left`;
+  $("acct-who").textContent=S.email?`Signed in as ${S.email}`:"Not signed in. Your letters live in this browser.";
+  $("acct-signin").hidden=!!S.email; $("acct-signout").hidden=!S.email&&!S.token;
+  $("acct-link").value=hosted&&S.token?`${location.origin}/write?key=${S.token}`:"Available on the live site";
+  const list=$("acct-letters"); list.innerHTML=`<li class="muted">Loading your letters…</li>`;
+  if(!hosted||!S.token){ list.innerHTML=`<li class="muted">Letters you seal on the live site will appear here.</li>`; return; }
+  try{ const r=await api("/api/letters",{token:S.token});
+    list.innerHTML=r.letters.length?r.letters.map(l=>`<li><a href="${l.url}" target="_blank" rel="noopener"><b>${l.to?escHtml(l.to):"Someone"}</b><span>${new Date(l.created_at.replace(" ","T")+"Z").toLocaleDateString(undefined,{month:"short",day:"numeric"})}${l.unlock_at&&l.unlock_at>new Date().toISOString()?" · opens "+new Date(l.unlock_at).toLocaleDateString(undefined,{month:"short",day:"numeric"}):""}${l.locked?" · secret question":""}${l.certified?" · ✓ certified":""}</span></a></li>`).join(""):`<li class="muted">No letters yet. Your first one is waiting.</li>`;
+  }catch(e){ list.innerHTML=`<li class="muted">Couldn’t load your letters. Try again in a moment.</li>`; }
+}
+const escHtml=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function acctMsg(id,t,ok){ const m=$(id); m.textContent=t; m.className="formmsg "+(ok?"ok":"err"); }
+function bindAccount(){
+  $("acctbtn").onclick=openAccount; $("acctclose").onclick=()=>$("acctmodal").hidden=true;
+  $("acct-copy").onclick=async()=>{ if(API===null) return; try{ await navigator.clipboard.writeText($("acct-link").value); acctMsg("acct-linkmsg","Copied. Keep it private: anyone with this link can use your letters.",true); }catch(e){ $("acct-link").select(); } };
+  $("acct-signinform").addEventListener("submit",async e=>{ e.preventDefault(); const email=$("acct-email").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return acctMsg("acct-signinmsg","Enter an email like you@example.com.",false);
+    if(API===null) return acctMsg("acct-signinmsg","Sign-in works on the live Quilliam site.",false);
+    try{ await api("/api/signin/start",{email,token:S.token}); acctMsg("acct-signinmsg",`Check ${email} for a sign-in link. It works for 30 minutes.`,true); }
+    catch(err){ acctMsg("acct-signinmsg",err.data&&err.data.error==="email_not_configured"?"Email sign-in isn’t switched on yet. Use your private sign-in link below to open your letters on another device.":"Couldn’t send the email. Try again in a minute.",false); } });
+  $("acct-redeemform").addEventListener("submit",async e=>{ e.preventDefault(); const code=$("acct-code").value.trim();
+    if(!code) return; if(API===null) return acctMsg("acct-redeemmsg","Codes work on the live Quilliam site.",false);
+    try{ const r=await api("/api/redeem",{token:S.token,code}); applyAccount(r.account); renderAccount(); acctMsg("acct-redeemmsg",r.message||"Code applied.",true); $("acct-code").value=""; say("A code! Splendid. More letters for the world.","funny"); }
+    catch(err){ const m={unknown_code:"That code doesn’t exist. Check the spelling.",expired:"That code has expired.",used_up:"That code has been fully used.",already:"You’ve already used this code."}; acctMsg("acct-redeemmsg",m[err.data&&err.data.error]||"Couldn’t apply the code. Try again.",false); } });
+  $("acct-signout").onclick=()=>{ if(!$("acct-signout").dataset.confirm){ $("acct-signout").dataset.confirm="1"; $("acct-signout").textContent="Tap again to sign out (save your link first)"; return; }
+    store.set("q.token",null); store.set("q.email",""); location.href="/write"; };
+  const plansNote=$("plannote"); if(plansNote&&API!==null){ plansNote.hidden=false; plansNote.innerHTML=`Have a discount code? Enter it on the Stripe checkout page. Have a Quilliam gift or company code? <button class="linkish" id="plancode" type="button">Redeem it here</button>.`; $("plancode").onclick=()=>{ $("plans").hidden=true; openAccount(); $("acct-code").focus(); }; }
+  acctLabel();
+}
+async function handleAuthParams(){
+  if(API===null) return; const qp=new URLSearchParams(location.search); let changed=false;
+  if(qp.has("key")){ qp.delete("key"); changed=true; }
+  if(qp.get("signin")){ try{ const r=await api("/api/signin/finish",{code:qp.get("signin"),token:S.token}); applyAccount(r.account); S.email=r.email; store.set("q.email",r.email); toast(`Signed in as ${r.email}`); say("Welcome back! Your letters are right where you left them.","love"); }catch(e){ toast("That sign-in link has expired. Ask for a new one."); } qp.delete("signin"); changed=true; }
+  if(changed) history.replaceState(null,"",location.pathname+(qp.toString()?"?"+qp:""));
+  acctLabel();
+}
+
 /* ================= Boot ================= */
 S.group=paper().group;
 initFields(); loveFields(); renderPens(); renderInks();
@@ -1665,7 +1964,9 @@ if(API!==null){
   const qp=new URLSearchParams(location.search);
   if(qp.get("to")){ $("to").value=qp.get("to").slice(0,40); renderText(); }
   (async()=>{
-    try{ applyAccount(await api("/api/me",{token:S.token})); }catch(e){}
+    { const k=qp.get("key"); if(k&&/^[a-f0-9]{48}$/.test(k)){ S.token=k; store.set("q.token",k); } }
+    try{ const a=await api("/api/me",{token:S.token}); if(qp.get("key")) toast(a.token===qp.get("key")?"Signed in on this device":"That sign-in link isn’t valid anymore."); applyAccount(a); }catch(e){}
+    await handleAuthParams();
     const sid=qp.get("paid");
     if(qp.has("paid")||qp.has("canceled")||qp.has("plans")) history.replaceState(null,"",location.pathname+(qp.get("to")?"?to="+encodeURIComponent(qp.get("to")):""));
     if(sid){
@@ -1675,7 +1976,8 @@ if(API!==null){
     if(qp.has("plans")) openPlans("Every plan includes Quilliam’s stamp, every paper and every sticker.");
   })();
 }
-if(API!==null){ fetch(API+"/api/health").then(r=>r.json()).then(j=>{ if(j&&j.ai){ aiOK=true; $("ask").hidden=false; } }).catch(()=>{}); }
+bindAccount();
+if(API!==null){ fetch(API+"/api/health").then(r=>r.json()).then(j=>{ if(j&&j.ai){ aiOK=true; $("ask").hidden=false; } if(j) S.emailOn=!!j.email; }).catch(()=>{}); }
 else { ["opendate","lockq","locka"].forEach(id=>$(id).disabled=true); $("delivernote").textContent="Delivery dates and secret questions work on the live Quilliam site."; }
 if(window.claude&&claude.use){
   claude.use("sample").then(async s=>{ if(!s) return; sample=s; $("ask").hidden=false; try{ imgOK=!!(await s.limits()).images; }catch(e){} });
