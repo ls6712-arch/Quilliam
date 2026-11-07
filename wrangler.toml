@@ -2,6 +2,8 @@
 name = "quilliam"
 main = "worker/worker.js"
 compatibility_date = "2026-10-01"
+# Keep variables set in the Cloudflare dashboard (GOOGLE_CLIENT_ID, MAIL_FROM…) on every Git deploy.
+keep_vars = true
 
 [[d1_databases]]
 binding = "DB"
