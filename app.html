@@ -367,6 +367,21 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
 .sealrow.inl{grid-template-columns:auto 44px auto 1fr;align-items:center;gap:8px}
 #sl-letter{width:44px;text-align:center;font:700 16px Georgia,serif;color:inherit;background:#00000033;border:1px solid #ffffff24;border-radius:8px;padding:6px 0;text-transform:uppercase}
 #sl-finish{font:inherit;font-size:13px;color:inherit;background:#231c17;border:1px solid #ffffff24;border-radius:8px;padding:6px 8px}
+
+/* your own paper */
+.shelf.solo{grid-auto-flow:row;grid-template-columns:200px minmax(0,1fr);align-items:start}
+.tcard.cpempty .swatch{background:repeating-linear-gradient(135deg,#ffffff0d 0 10px,transparent 10px 20px)!important;border:1.5px dashed #e0a63a99;color:#e0a63a!important;font:700 13px Manrope,system-ui,sans-serif!important;gap:6px;justify-content:center}
+.cpplus{font-size:20px;line-height:1}
+.cpanel{border:1px solid var(--line);background:var(--desk-2);border-radius:14px;padding:12px 14px;display:grid;gap:9px}
+.cprow{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px}
+.cprow>span,.cprow>label{font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cprow.top{display:flex;flex-wrap:wrap;gap:10px}
+.cprow .cphint{font:400 12.5px Manrope,system-ui,sans-serif;text-transform:none;letter-spacing:0;color:var(--muted)}
+.cpseg{display:flex;flex-wrap:wrap;gap:6px;grid-column:2/4}
+.cpseg button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:6px 12px;font:600 12.5px Manrope,system-ui,sans-serif;cursor:pointer}
+.cpseg button[aria-pressed="true"]{background:#e0a63a;border-color:#e0a63a;color:#1d1714}
+#cp-fade{width:100%;accent-color:#e0a63a}#cp-fadev{font:600 12.5px Manrope,system-ui,sans-serif;color:var(--muted);min-width:34px;text-align:right}
+@media (max-width:640px){.shelf.solo{grid-template-columns:1fr}.cprow{grid-template-columns:56px 1fr auto}}
 </style>
 
 <div class="wrap">
@@ -2071,6 +2086,70 @@ SEAL_PRESETS.push(
   {n:"Autumn leaf",o:{shape:"drip",color:"terracotta",emblem:"leaf",finish:"antique"}},
   {n:"Midnight toast",o:{shape:"classic",color:"gold",emblem:"cheers",finish:"metallic"}},
 );
+
+/* ================= Your own paper ================= */
+// Upload any photo, screenshot or scanned stationery and write on it.
+const CP_FONTS={serif:["Classic","'Cormorant Garamond',Georgia,serif","'Pinyon Script',cursive"],script:["Script","'Cormorant Garamond',Georgia,serif","'Pinyon Script',cursive"],hand:["Handwritten","'Caveat',cursive","'Caveat',cursive"],type:["Typewriter","'Special Elite','Courier New',monospace","'Special Elite','Courier New',monospace"],modern:["Modern","'Manrope',system-ui,sans-serif","'Fraunces',Georgia,serif"]};
+S.cp=Object.assign({img:"",fit:"cover",fade:30,wash:"light",ink:"auto",font:"serif",lum:0.7,avg:"#f4efe6"},store.get("q.cpaper",{}));
+const CUSTOM={id:"custom",group:"custom",name:"Your own paper",sub:"Photo or screenshot",meta:"UPLOAD",isNew:true,bg:"#f6f1e7",deco:"none",ink:"#2b2420",font:CP_FONTS.serif[1],gfont:CP_FONTS.serif[2],greet:"Dear {to},",close:"With love,"};
+PAPERS.push(CUSTOM);
+PAPER_GROUPS.splice(PAPER_GROUPS.findIndex(g=>g[0]==="love"),0,["custom","✦ Your own"]);
+function cpSave(){ try{ localStorage.setItem("q.cpaper",JSON.stringify(S.cp)); }catch(e){ try{ localStorage.setItem("q.cpaper",JSON.stringify({...S.cp,img:""})); }catch(e2){} if(S.cp.img) toast("This image is too big to remember after you close the page, but you can use it now."); } }
+function cpBuild(){
+  const c=S.cp, f=c.fade/100, wash=c.wash==="dark"?`rgba(14,12,16,${f})`:`rgba(255,253,248,${f})`;
+  const img=c.img?`url('${c.img}')`:"";
+  const layer=!img?"":c.fit==="tile"?`${img} 0 0/34% auto repeat`:c.fit==="contain"?`${img} center/contain no-repeat`:`${img} center/cover no-repeat`;
+  CUSTOM.bg=img?`linear-gradient(${wash},${wash}),${layer},${c.avg}`:"repeating-linear-gradient(135deg,#f6f1e7 0 14px,#efe8da 14px 28px)";
+  // Perceived brightness of the page after the wash, to pick an ink that reads.
+  const L=c.wash==="dark"?c.lum*(1-f):c.lum*(1-f)+f;
+  CUSTOM.ink=c.ink==="dark"?"#231c18":c.ink==="light"?"#fbf6ee":L<0.5?"#fbf6ee":"#231c18";
+  const fo=CP_FONTS[c.font]||CP_FONTS.serif; CUSTOM.font=fo[1]; CUSTOM.gfont=fo[2];
+}
+function cpAnalyze(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ const cv=document.createElement("canvas"); cv.width=cv.height=24; const x=cv.getContext("2d"); x.drawImage(im,0,0,24,24);
+  const d=x.getImageData(0,0,24,24).data; let r=0,g=0,b=0; for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; } const n=d.length/4; r/=n; g/=n; b/=n;
+  res({lum:(0.2126*r+0.7152*g+0.0722*b)/255,avg:`rgb(${r|0},${g|0},${b|0})`}); }; im.onerror=()=>res({lum:.7,avg:"#f4efe6"}); im.src=src; }); }
+async function cpUpload(file){
+  try{ const src=await readImage(file,1500); const a=await cpAnalyze(src);
+    Object.assign(S.cp,{img:src,...a}); if(a.lum<0.35 && S.cp.wash==="light" && S.cp.fade<40) S.cp.fade=20;
+    cpSave(); cpBuild(); S.paper="custom"; store.set("q.paper","custom"); renderShelf(); applyPaper();
+    say(pick(["Your very own paper! I’ve never seen anything like it.","Ooh, custom stationery. Very fancy.","Now that’s personal. They’ll know it’s from you before they read a word."]),"love");
+  }catch(e){ toast("That file isn’t an image we can open. Try a JPG, PNG or screenshot."); }
+}
+function cpControls(){
+  const c=S.cp, d=document.createElement("div"); d.className="cpanel"; d.id="cpanel";
+  const seg=(name,key,opts)=>`<div class="cprow"><span>${name}</span><div class="cpseg" role="group" aria-label="${name}">${opts.map(([v,l])=>`<button type="button" data-k="${key}" data-v="${v}" aria-pressed="${c[key]===v}">${l}</button>`).join("")}</div></div>`;
+  d.innerHTML=`<div class="cprow top"><button type="button" class="btn" id="cp-up">${c.img?"Replace image":"Upload image"}</button>${c.img?`<button type="button" class="linkish" id="cp-clear">Remove</button>`:""}<span class="cphint">A photo, a screenshot of stationery you love, or a scan of your own paper.</span></div>
+    ${seg("Fit","fit",[["cover","Fill page"],["contain","Whole image"],["tile","Pattern"]])}
+    <div class="cprow"><label for="cp-fade">Soften</label><input type="range" id="cp-fade" min="0" max="85" step="5" value="${c.fade}" aria-describedby="cp-fadev"><output id="cp-fadev">${c.fade}%</output></div>
+    ${seg("Wash","wash",[["light","Light"],["dark","Dark"]])}
+    ${seg("Ink","ink",[["auto","Auto"],["dark","Dark"],["light","Light"]])}
+    ${seg("Font","font",Object.entries(CP_FONTS).map(([k,v])=>[k,v[0]]))}`;
+  d.querySelector("#cp-up").onclick=()=>$("cpfile").click();
+  const clr=d.querySelector("#cp-clear"); if(clr) clr.onclick=()=>{ S.cp.img=""; cpSave(); cpBuild(); renderShelf(); applyPaper(); };
+  d.querySelectorAll(".cpseg button").forEach(b=>b.onclick=()=>{ S.cp[b.dataset.k]=b.dataset.v; cpSave(); cpBuild(); if(S.paper!=="custom"&&S.cp.img){ S.paper="custom"; store.set("q.paper","custom"); } renderShelf(); applyPaper(); });
+  const fd=d.querySelector("#cp-fade"); fd.oninput=()=>{ S.cp.fade=+fd.value; d.querySelector("#cp-fadev").textContent=fd.value+"%"; cpBuild(); if(S.paper==="custom") applyPaper(); const sw=document.querySelector('.tcard[data-id="custom"] .swatch'); if(sw){ sw.style.background=CUSTOM.bg; sw.style.color=CUSTOM.ink; } };
+  fd.onchange=()=>cpSave();
+  return d;
+}
+{ const inp=document.createElement("input"); inp.type="file"; inp.id="cpfile"; inp.accept="image/*"; inp.hidden=true; document.body.append(inp);
+  inp.onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) cpUpload(f); }; }
+const _renderShelf=renderShelf;
+renderShelf=function(){
+  _renderShelf(); const sh=$("shelf"); sh.classList.toggle("solo",S.group==="custom");
+  const card=[...sh.children].find(b=>b.querySelector("strong")&&b.querySelector("strong").textContent===CUSTOM.name);
+  if(card){ card.dataset.id="custom";
+    if(!S.cp.img){ card.classList.add("cpempty"); card.querySelector(".swatch").innerHTML=`<span class="cpplus" aria-hidden="true">+</span>Upload a photo`; card.onclick=()=>$("cpfile").click(); }
+  }
+  if(S.group==="custom") sh.append(cpControls());
+};
+// Drop an image anywhere on the paper shelf or the letter while "Your own" is open.
+["shelf","letter"].forEach(id=>{ const el=$(id); el.addEventListener("dragover",e=>{ if(S.group==="custom"&&e.dataTransfer&&[...e.dataTransfer.items].some(i=>i.kind==="file")){ e.preventDefault(); } });
+  el.addEventListener("drop",e=>{ if(S.group!=="custom") return; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f&&/^image\//.test(f.type)){ e.preventDefault(); cpUpload(f); } }); });
+// Paste a screenshot straight in (Cmd/Ctrl+V) while "Your own" is open.
+document.addEventListener("paste",e=>{ if(S.group!=="custom"||(e.target&&e.target.isContentEditable)||/INPUT|TEXTAREA/.test((e.target||{}).tagName||"")) return;
+  const it=[...(e.clipboardData?e.clipboardData.items:[])].find(i=>i.type.startsWith("image/")); if(it){ e.preventDefault(); cpUpload(it.getAsFile()); } });
+cpBuild();
+PAPER_SPECIAL.custom="Your own paper! One of a kind, like the person reading it.";
 
 /* ================= Boot ================= */
 S.group=paper().group;
