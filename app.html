@@ -253,6 +253,16 @@ input[type=text],input[type=email],select{background:var(--desk);border:1px soli
 .cert{display:grid;gap:10px}
 .cert dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13px;font-variant-numeric:tabular-nums}
 .cert dt{color:var(--muted)} .cert dd{margin:0;font-weight:600}
+.sharebox{display:grid;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--desk)}
+.sharebox h4{margin:0;font-size:13px;font-weight:700;color:var(--text)}
+.shares{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:420px){.shares{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.shr{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:var(--desk-2);color:var(--text);text-decoration:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.shr:hover{border-color:#6b5a48}
+.shr svg{width:26px;height:26px}
+.shr.wa svg{color:#25d366}.shr.sms svg{color:#34c759}.shr.em svg{color:#e3a83c}.shr.sys svg{color:#9fc1dd}
+.sharelink{display:flex;gap:8px;align-items:center}
+.sharelink input{flex:1;min-width:0;background:var(--desk-2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--text);font:inherit;font-size:13px}
 .verdict{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:19px;line-height:1.35;color:var(--text);border-left:3px solid var(--gold);padding-left:12px}
 .row{display:flex;flex-wrap:wrap;gap:8px}
 .btn{border:1px solid var(--line);background:var(--desk);border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px}
@@ -479,13 +489,22 @@ legend{font-size:12px;color:var(--muted);padding:0;margin-bottom:6px}
       <div class="cert">
         <dl id="certdl"></dl>
         <p class="verdict" id="verdict"></p>
+        <div class="sharebox" id="sharebox">
+          <h4 id="share-h">Send it to <span id="share-to">them</span></h4>
+          <div class="shares">
+            <a class="shr wa" id="sh-wa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.2-.2-.5-.3Z"/></svg>WhatsApp</a>
+            <a class="shr sms" id="sh-sms"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.8 2 11.4c0 2.6 1.4 4.9 3.7 6.4L5 21l3.6-2a11.6 11.6 0 0 0 3.4.5c5.5 0 10-3.8 10-8.4S17.5 3 12 3Z"/></svg>Messages</a>
+            <a class="shr em" id="sh-em"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm9 7.3L4.6 7H4v.6l8 5.7 8-5.7V7h-.6Z"/></svg>Email</a>
+            <button type="button" class="shr sys" id="sh-sys"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l4 4-1.4 1.4L13 5.8V15h-2V5.8L9.4 7.4 8 6Zm-7 9h3v2H6v7h12v-7h-2v-2h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"/></svg>More…</button>
+          </div>
+          <div class="sharelink"><input id="sharelink" type="text" readonly aria-label="Letter link"><button class="btn" type="button" id="copymsg">Copy link</button></div>
+        </div>
         <div class="row">
           <button class="btn primary" id="saveimg" hidden>Save as image</button>
-          <button class="btn" id="copymsg">Copy share message</button>
           <button class="btn" id="mailcopy">Mail a real copy</button>
           <button class="btn" id="another">Write another</button>
         </div>
-        <p class="fine" id="sharenote">Share links that open the letter for your recipient come with the hosted version.</p>
+        <p class="fine" id="sharenote">Sharing works on the live site, where every sealed letter gets its own link.</p>
       </div>
     </div>
   </div>
@@ -1259,6 +1278,7 @@ $("sealbtn").onclick=async()=>{
   const mins=Math.max(1,Math.round(S.activeMs/60000)), sig=signals();
   $("certdl").innerHTML=`<dt>Paper</dt><dd>${paper().name}</dd><dt>Layout</dt><dd>${LAYOUTS.find(l=>l.id===S.layout).name}</dd><dt>Written by</dt><dd>${S.mode==="hand"?"Hand, "+S.strokes.length+" pen strokes":"Keyboard, "+sig.words+" words"}</dd><dt>Decorations</dt><dd>${S.items.filter(i=>i.type==="sticker").length} stickers, ${S.items.filter(i=>i.type==="photo").length+(S.slotPhoto&&["photo","travel"].includes(S.layout)?1:0)} photos</dd><dt>Time writing</dt><dd>about ${mins} min</dd><dt>Pasted text</dt><dd>${Math.round(sig.pasteRatio*100)}%</dd><dt>Quilliam stamp</dt><dd style="color:${ok?'var(--ok)':'var(--warn)'}">${ok?"Awarded":"Withheld"}</dd>`;
   const fallback=ok?"“Every crooked letter of this is yours. I’ve pressed my stamp on it with great ceremony.”":"“Lovely paper, but too much of this arrived pre-written. Write it yourself next time and the stamp is yours.”";
+  setupShare();
   $("verdict").textContent=sample?"Quilliam is reading your letter…":fallback; $("sealed").hidden=false;
   if(sample){ const r=await askClaude("verdict"); $("verdict").textContent=r?"“"+r.line+"”":fallback; }
 };
@@ -1266,8 +1286,33 @@ $("saveimg").onclick=async()=>{
   if(API!==null&&lastImage){ const a=document.createElement("a"); a.href=lastImage.toDataURL("image/png"); a.download=`letter-to-${($("to").value.trim()||"friend").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}.png`; document.body.appendChild(a); a.click(); a.remove(); return; }
   if(!downloads||!lastImage) return; const blob=await new Promise(r=>lastImage.toBlob(r,"image/png"));
   try{ await downloads.save({filename:`letter-to-${($("to").value.trim()||"friend").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}.png`,data:blob}); }catch(e){ if(e&&!["declined","cancelled"].includes(e.code)) toast("Couldn’t save the image"); } };
-$("copymsg").onclick=async()=>{ const msg=`I wrote you a real letter, by hand, on ${paper().name} paper.${certified()?" Quilliam certified it human-written.":""} ${S.shareUrl?"Open it here: "+S.shareUrl:"Open it and write me one back."}`;
-  try{ await navigator.clipboard.writeText(msg); toast("Copied"); }catch(e){ toast(msg); } };
+/* Sharing: each app gets the letter link plus a short note; "More…" opens the phone's own share sheet. */
+function shareText(){ const to=$("to").value.trim(), from=$("from").value.trim();
+  return `${to?to+", I":"I"} wrote you a real letter, by hand${certified()?" (Quilliam certified it human-written)":""}. Open it here:`; }
+function setupShare(){
+  const url=S.shareUrl, msg=shareText(), full=url?`${msg} ${url}`:msg.replace(/ Open it here:$/,"");
+  const to=$("to").value.trim(), from=$("from").value.trim();
+  $("share-to").textContent=to||"them";
+  const has=!!url;
+  $("sharelink").value=url||"Share links work on the live site";
+  const apple=/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+  $("sh-wa").href="https://wa.me/?text="+encodeURIComponent(full);
+  $("sh-sms").href=(apple?"sms:&body=":"sms:?body=")+encodeURIComponent(full);
+  $("sh-em").href="mailto:?subject="+encodeURIComponent(from?`A letter from ${from}`:"I wrote you a letter")+"&body="+encodeURIComponent(full+"\n\n"+(from||""));
+  $("sh-sys").hidden=!navigator.share;
+  ["sh-wa","sh-sms","sh-em","sh-sys","copymsg"].forEach(id=>{ const el=$(id); el.toggleAttribute("aria-disabled",!has); el.style.opacity=has?"":".5"; el.style.pointerEvents=has?"":"none"; });
+}
+$("sh-sys").onclick=async()=>{
+  if(!navigator.share||!S.shareUrl) return;
+  const data={title:"A letter for you",text:shareText(),url:S.shareUrl};
+  try{
+    if(lastImage&&navigator.canShare){ const blob=await new Promise(r=>lastImage.toBlob(r,"image/png")); const file=new File([blob],"letter.png",{type:"image/png"});
+      if(navigator.canShare({files:[file]})) data.files=[file]; }
+    await navigator.share(data);
+  }catch(e){ if(e&&e.name!=="AbortError") toast("Couldn’t open sharing. Use Copy link instead."); }
+};
+$("copymsg").onclick=async()=>{ if(!S.shareUrl) return; const f=$("sharelink");
+  try{ await navigator.clipboard.writeText(S.shareUrl); toast("Link copied"); }catch(e){ f.focus(); f.select(); toast("Press Copy to copy the selected link"); } };
 $("another").onclick=()=>{ $("sealed").hidden=true; $("l-stamp").hidden=true; S.strokes=[]; ta.value=""; S.keys=S.backs=S.pasted=0; S.gaps=[]; S.activeMs=0; S.startedAt=0; S.items=[]; S.sel=null; S.slotPhoto=null; $("slotimg").hidden=true; $("slotbtn").hidden=false; renderItems(); redraw(); update(); };
 
 /* ================= Mail a real copy (feature request) ================= */
@@ -1305,7 +1350,7 @@ applyLayout(); applyPaper(); renderItems(); renderCredits(); setMode("hand");
 new ResizeObserver(sizePad).observe($("l-body")); sizePad();
 if(document.fonts) document.fonts.ready.then(redraw);
 if(API!==null){
-  $("saveimg").hidden=false; $("plannote").hidden=true; $("copymsg").textContent="Copy share link";
+  $("saveimg").hidden=false; $("plannote").hidden=true; 
   $("sharenote").textContent="Your link opens the letter for them, with a button to write one back.";
   const qp=new URLSearchParams(location.search);
   if(qp.get("to")){ $("to").value=qp.get("to").slice(0,40); renderText(); }
