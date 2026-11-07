@@ -20,7 +20,7 @@ const WAX={
 };
 const SEAL_SHAPES={classic:"Classic pour",drip:"Dripping",heart:"Heart",oval:"Oval",octagon:"Octagon",scallop:"Scalloped",square:"Square",rope:"Rope edge"};
 const SEAL_FINISHES={wax:"Wax",metallic:"Metallic",pearl:"Pearlescent",marble:"Marbled",antique:"Antique"};
-const SEAL_EMBLEMS={initial:"Your initial",heart:"Heart",rose:"Rose",crown:"Crown",star:"Star",moon:"Moon",bee:"Bee",laurel:"Laurel",infinity:"Infinity",quill:"Quill",twohearts:"Two hearts",q:"Quilliam"};
+const SEAL_EMBLEMS={initial:"Your initial",heart:"Heart",rose:"Rose",crown:"Crown",star:"Star",moon:"Moon",bee:"Bee",laurel:"Laurel",infinity:"Infinity",quill:"Quill",twohearts:"Two hearts",q:"Quilliam",snowflake:"Snowflake",tree:"Christmas tree",holly:"Holly",leaf:"Maple leaf",wheat:"Wheat",cheers:"Champagne",spark:"Sparkle"};
 function sealRng(seed){ let a=seed>>>0||1; return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function sealHash(s){ let h=2166136261; for(const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
 function smoothPath(pts){ // closed Catmull-Rom through points
@@ -63,6 +63,13 @@ function sealEmblem(kind,fill,letter){
       return `<g ${f}>${s}</g><text x="100" y="101" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="40" ${f}>${(letter||"").slice(0,1).toUpperCase().replace(/[<>&"]/g,"")}</text>`; }
     case "infinity": return `<path d="M64 100c0-14 12-22 22-22 16 0 24 22 28 22s12-22 28-22c10 0 22 8 22 22s-12 22-22 22c-16 0-24-22-28-22s-12 22-28 22c-10 0-22-8-22-22z" fill="none" stroke="${fill}" stroke-width="9" transform="translate(-14 0) scale(1.14 1) translate(0 0)"/>`;
     case "quill": return `<g ${f}><path d="M132 60c-30 6-52 30-60 66l6 2c4-10 8-18 14-24 8 0 18-4 24-12-6 0-12 0-16-2 10-2 20-8 24-16-6 2-12 2-16 0 10-4 18-10 24-14z"/><path d="M70 136l8-12" stroke="${fill}" stroke-width="4" stroke-linecap="round"/></g>`;
+    case "snowflake": { let s=""; for(let i=0;i<6;i++){ s+=`<g transform="rotate(${i*60} 100 100)"><rect x="97" y="62" width="6" height="38" rx="3"/><path d="M100 74l-11-9M100 74l11-9M100 86l-8-7M100 86l8-7" stroke="${fill}" stroke-width="4.5" stroke-linecap="round" fill="none"/></g>`; } return `<g ${f}>${s}<circle cx="100" cy="100" r="7"/></g>`; }
+    case "tree": return `<g ${f}><path d="M100 58l16 22h-8l14 18h-9l15 20H72l15-20h-9l14-18h-8z"/><rect x="94" y="118" width="12" height="14" rx="2"/><path d="M100 50l2.4 5 5.4.6-4 3.7 1.1 5.4-4.9-2.7-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z"/></g>`;
+    case "holly": return `<g ${f} transform="translate(100 100) scale(1.45) translate(-100 -96)"><path d="M98 104c-6-8-18-10-30-6 4 3 2 7 6 9-4 2-2 7-6 9 12 2 24-2 30-12zM102 104c6-8 18-10 30-6-4 3-2 7-6 9 4 2 2 7 6 9-12 2-24-2-30-12z"/><circle cx="92" cy="88" r="8"/><circle cx="108" cy="88" r="8"/><circle cx="100" cy="76" r="8"/></g>`;
+    case "leaf": return `<g ${f} transform="translate(100 100) scale(1.12) translate(-100 -100)"><path d="M100 60l7 16 12-6-3 16 16 1-12 12 9 9-17 2 2 16-14-10-14 10 2-16-17-2 9-9-12-12 16-1-3-16 12 6z"/><rect x="98" y="122" width="4" height="18" rx="2"/></g>`;
+    case "wheat": { let s=`<rect x="98" y="70" width="4" height="70" rx="2"/>`; for(let i=0;i<5;i++){ const y=70+i*11; s+=`<ellipse cx="91" cy="${y}" rx="5" ry="10" transform="rotate(-28 91 ${y})"/><ellipse cx="109" cy="${y}" rx="5" ry="10" transform="rotate(28 109 ${y})"/>`; } return `<g ${f}>${s}<ellipse cx="100" cy="60" rx="5" ry="10"/></g>`; }
+    case "cheers": return `<g ${f}><g transform="rotate(-16 84 100)"><path d="M70 62h26l-3 30a10 10 0 0 1-20 0z"/><rect x="81" y="100" width="4" height="26"/><rect x="72" y="125" width="22" height="5" rx="2"/></g><g transform="rotate(16 116 100)"><path d="M104 62h26l-3 30a10 10 0 0 1-20 0z"/><rect x="115" y="100" width="4" height="26"/><rect x="106" y="125" width="22" height="5" rx="2"/></g><circle cx="100" cy="52" r="3"/><circle cx="92" cy="44" r="2.4"/><circle cx="108" cy="44" r="2.4"/></g>`;
+    case "spark": return `<g ${f}><path d="M100 56c3 26 18 41 44 44-26 3-41 18-44 44-3-26-18-41-44-44 26-3 41-18 44-44z"/><path d="M140 62c1 8 5 12 13 13-8 1-12 5-13 13-1-8-5-12-13-13 8-1 12-5 13-13z"/></g>`;
     default: return `<text x="100" y="102" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="74" ${f}>Q</text>`;
   }
 }
